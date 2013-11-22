@@ -1,0 +1,6 @@
+sws
+unittest
+*.swp
+*.o
+core.*
+*.out

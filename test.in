@@ -1,0 +1,4 @@
+0 GET /index.html      HTTP/0.9
+0 GET /index.html      HTTP/1.0
+0 GET /index.html      HTTP/1.1
+1 GET /index.html      HTTP
