@@ -1,20 +1,22 @@
 CC=gcc
 CFLAGS=-Wall -g
 
-SRC=main.c net.c parser.c
-OBJ=main.o net.o parser.o
+SRC=net.c parser.c response_builder.c
+OBJ=net.o parser.o response_builder.o
 EXE=sws
 
-TESTSRC=net.c parser.c test.c
-TESTOBJ=net.o parser.o test.o
+MAINSRC=${SRC} main.c
+MAINOBJ=${OBJ} main.o
+
+TESTSRC=${SRC} test.c
+TESTOBJ=${OBJ} test.o
 TESTEXE=unittest
 
-
-${EXE}: ${OBJ}
-	${CC} ${CFLAGS} ${OBJ} -o ${EXE}
+${EXE}: ${MAINOBJ}
+	${CC} ${CFLAGS} ${MAINOBJ} -o ${EXE}
 
 test: ${TESTOBJ}
 	${CC} ${CFLAGS} ${TESTOBJ} -o ${TESTEXE}
 
 clean:
-	rm -f ${OBJ} ${EXE} ${TESTOBJ} ${TESTEXE} core.*
+	rm -f *.o ${EXE} ${TESTEXE} core.*

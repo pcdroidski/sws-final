@@ -1,6 +1,7 @@
 #include "string.h"
 
 #include "parser.h"
+#include "response_builder.h"
 
 void
 dump_reqinfo(t_httpreq *);
@@ -17,6 +18,17 @@ main(int argc, char **argv)
     /* Return 0 when OK, 1 on error */
     code = 1 - req->valid;
     free(req);
+
+    /* Not an effective test, but spits out some response to stdout */
+    t_httpresp *resp;
+    resp = init_response();
+    resp->status = HTTP_OK;
+
+    resp->content = strdup("This is the response body.");
+
+    finalize_response(resp);
+    write_response(resp, 1);
+    free_response(resp);
 
     return code;
 }
