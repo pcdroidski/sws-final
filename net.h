@@ -15,7 +15,7 @@ run_server(struct sockaddr_in *);
 void
 handle_connection(int);
 
-void 
+void
 sig_handler(int);
 
 #endif
