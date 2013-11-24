@@ -18,43 +18,52 @@ int flags_d = 0;
 int flags_h = 0;
 int flags_i = 0;
 int flags_l = 0;
+int flags_p = 0;
 
+/* Variables */
+int port = 8080;
+char *address;
+char *dir = NULL;
+char *log_file = NULL;
 char *cgi_dir = NULL;
+
 
 void
 usage(int);
 
-int
-main(int argc, char **argv)
+void setup_options(int arc, char *argv[]);
+
+
+/** Fetch all options passed in arv */
+void
+setup_options(int argc, char *argv[])
 {
     char opt;
-    char *logfilename;
-    int port = 8080;
-    char *address;
-
-    debug = FALSE;
-
-    /* Read program options */
     while ((opt = getopt(argc, argv, "c:dhi:l:p:")) != -1) {
         switch (opt) {
-        case 'c': /* Execute CGI files in the given directory */
+        case 'c':
+            flags_c = 1;
             cgi_dir = strdup(optarg);
             break;
-        case 'd': /* Enter debug mode */
+        case 'd':
             debug = TRUE;
             break;
-        case 'h': /* Print a short usage summary and exit */
+        case 'h':
             usage(0);
-            /* NOTREACHED */
-        case 'i': /* Bind to the given IPv4 or IPv6 address */
-            address = strdup(optarg);
             break;
-        case 'l': /* Log to the given file */
-            logfilename = strdup(optarg);
+        case 'i':
+            flags_i = 1;
+            address = optarg;
             break;
-        case 'p': /* Listen on the given port */
-            errno = 0;
+        case 'l':
+            flags_l = 1;
+            log_file = strdup(optarg);
+            logging = TRUE;
+            break;
+        case 'p':
+            flags_p = 1;
             port = atoi(optarg);
+            errno = 0;
             if (errno == EINVAL || errno == ERANGE) {
                 perror("parsing port number");
                 exit(1);
@@ -66,13 +75,38 @@ main(int argc, char **argv)
         }
     }
 
+    dir = argv[optind];
+
+    if (debug) {
+      if (flags_c) {
+        printf("CGI execution allowed from dir: %s \n", cgi_dir);
+      }
+      if (flags_i) {
+        printf("IP Address binded to: %s \n", address);
+      }
+      if (flags_l) {
+        printf("Logging all requests to: %s \n", log_file);
+      }
+      if (flags_p) {
+        printf("Configured to use port: %d \n", port);
+      }
+    }
+}
+
+int
+main(int argc, char **argv)
+{
+    debug = FALSE;
+    logging = FALSE;
+    //logfilename = NULL;
+
+    /* Read program options */
+    setup_options(argc, argv);
+
     if (debug)
         printf("Configured to use port: %d\n", port);
 
     run_server(address, port);
-
-    run_server(&server);
-
     return 0;
 }
 

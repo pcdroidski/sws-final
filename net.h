@@ -10,6 +10,7 @@
 extern int flags_i;
 
 bool debug;
+bool logging;
 
 void
 run_server(char *address, int port);
