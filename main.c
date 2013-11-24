@@ -5,11 +5,19 @@
 #include <arpa/inet.h>
 #include <netinet/in.h>
 #include <errno.h>
+#include <unistd.h>
 #include <stdio.h>
 #include <stdlib.h>
 #include <string.h>
 
 #include "net.h"
+
+/* Flags */
+int flags_c = 0;
+int flags_d = 0;
+int flags_h = 0;
+int flags_i = 0;
+int flags_l = 0;
 
 char *cgi_dir = NULL;
 
@@ -19,16 +27,12 @@ usage(int);
 int
 main(int argc, char **argv)
 {
-    struct sockaddr_in server;
     char opt;
-    //char *logfilename;
-    int port;
+    char *logfilename;
+    int port = 8080;
+    char *address;
 
     debug = FALSE;
-    //logfilename = NULL;
-    server.sin_family = AF_INET;
-    server.sin_addr.s_addr = INADDR_ANY;
-    server.sin_port = htons(8080);
 
     /* Read program options */
     while ((opt = getopt(argc, argv, "c:dhi:l:p:")) != -1) {
@@ -43,10 +47,10 @@ main(int argc, char **argv)
             usage(0);
             /* NOTREACHED */
         case 'i': /* Bind to the given IPv4 or IPv6 address */
-            server.sin_addr.s_addr = inet_addr(optarg);
+            address = strdup(optarg);
             break;
         case 'l': /* Log to the given file */
-            //logfilename = strdup(optarg);
+            logfilename = strdup(optarg);
             break;
         case 'p': /* Listen on the given port */
             errno = 0;
@@ -57,15 +61,15 @@ main(int argc, char **argv)
             } else if (port <= 0) {
                 printf("Can't bind to port: '%s'\n", optarg);
                 exit(1);
-            } else {
-                server.sin_port = htons(port);
             }
             break;
         }
     }
 
     if (debug)
-        printf("Configured to use port: %d\n", ntohs(server.sin_port));
+        printf("Configured to use port: %d\n", port);
+
+    run_server(address, port);
 
     run_server(&server);
 

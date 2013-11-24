@@ -8,58 +8,114 @@
 #include <stdio.h>
 #include <stdlib.h>
 #include <string.h>
-
+#include <sys/types.h>
+#include <sys/socket.h>
+#include <netdb.h>
+#include <unistd.h>
 #include "net.h"
 
 #define MSGBUFSZ 1024
+#define MAX_CONNECTIONS 20
 
 int sock;
 
 void
-run_server(struct sockaddr_in *server)
+run_server(char *address, int port)
 {
-    socklen_t len;
     int msgsock;
 
-    /* Create socket */
-    if ((sock = socket(AF_INET, SOCK_STREAM, 0)) < 0) {
-        perror("opening socket");
-        exit(1);
+    if ((msgsock = bind_socket(address, port)) == -1) {
+         printf("Cannot start the server \n");
+       exit(1);
     }
 
-    /* Bind to the socket */
-    if (bind(sock, (struct sockaddr*) server, sizeof(*server))) {
-        perror("binding stream socket");
-        exit(1);
-    }
-
-    /* DEBUG: Print the actual port number */
-    if (debug) {
-        /* Find out assigned port number and print it out */
-        len = sizeof(*server);
-        if (getsockname(sock, (struct sockaddr*) server, &len)) {
-            perror("getting socket name");
-            exit(1);
-        }
-        printf("Socket has port #%d\n", ntohs(server->sin_port));
-    }
-
-    /* Set up signal handler to reap children */
-    signal(SIGCHLD, &sig_handler);
-
-    /* Set up signal handler to shut down */
-    signal(SIGTERM, &sig_handler);
-    signal(SIGINT, &sig_handler);
-
-    /* Listen on the socket for connections */
-    /* TODO Fine-tune the 'backlog' parameter; listen(3) */
-    listen(sock, 5);
+    /* Start Server */
+    int clientFD;
     do {
-        if ((msgsock = accept(sock, 0, 0)) < 0)
-            perror("accept");
-        else
-            handle_connection(msgsock);
-    } while (TRUE);
+        char incomming[INET6_ADDRSTRLEN];
+        struct addrinfo hint, *result;
+        memset(&hint, 0, sizeof(struct addrinfo));
+
+        /* Set up signal handler to reap children */
+        signal(SIGCHLD, &sig_handler);
+
+        /* Set up signal handler to shut down */
+        signal(SIGTERM, &sig_handler);
+        signal(SIGINT, &sig_handler);
+
+        /* Initiate the variables */
+        result = (struct addrinfo *) malloc(sizeof(struct addrinfo));
+        hint.ai_family = AF_UNSPEC;
+
+        /* specified, check type*/
+        if (address != NULL)
+            getaddrinfo(address, 0, &hint, &result);
+
+        /* Not specified, use IPv6 by default.    */
+        if (address == NULL)
+            result -> ai_family = AF_INET6;
+
+
+        // If it is a IPv6, then using IPv6 address family to listen.
+        if (result -> ai_family == AF_INET6) {
+            struct sockaddr_in6 remote;
+            socklen_t receive = INET6_ADDRSTRLEN;
+            memset(&remote, 0, sizeof(struct sockaddr_in6));
+
+            if ((clientFD = accept(msgsock, (struct sockaddr *)&remote,
+                &receive)) < 0) {
+                fprintf(stderr, "[ERROR]accept error\n");
+                exit(1);
+            }
+
+            // Get the incomming request address from client
+            if (inet_ntop(AF_INET6, &remote.sin6_addr.s6_addr, incomming,
+                INET6_ADDRSTRLEN) == NULL){
+                perror(strerror(errno));
+            }
+        }
+
+        // If it is a IPv4, using IPv4 address family.
+        if (result -> ai_family == AF_INET) {
+            struct sockaddr_in remote;
+            socklen_t receive = INET_ADDRSTRLEN;
+            memset(&remote, 0, sizeof(struct sockaddr_in));
+
+            if ((clientFD = accept(msgsock, (struct sockaddr *)&remote,
+                &receive)) < 0) {
+                fprintf(stderr,"[ERROR]accept error\n");
+                perror(strerror(errno));
+                exit(1);
+            }
+
+            // Get the incomming request address
+            if (inet_ntop(AF_INET,&remote.sin_addr.s_addr,
+                incomming,INET_ADDRSTRLEN) == NULL) {
+                perror(strerror(errno));
+            }
+        }
+
+        if (debug)
+            printf("One request from IP address: %s\n",incomming);
+
+        int cid;
+        int REQUEST_LINE_MAX = 1024;
+
+        if ((cid = fork()) == 0) {
+            int receiveStatus = 0;
+            char totalheader[REQUEST_LINE_MAX];
+
+            // Waiting until a message is received
+            receiveStatus = read(clientFD, totalheader, REQUEST_LINE_MAX);
+
+            /** Parsing will go here */
+            if (read > 0){
+                printf("Receiving : %s \n", totalheader);
+            }
+        }
+        break;
+
+    } while (1);
 }
 
 void
@@ -121,6 +177,96 @@ handle_connection(int msgsock)
     }
 }
 
+int
+bind_socket(char *address, int port) {
+    int sock;
+
+    if(flags_i == 1) {
+        struct addrinfo baseInfo, *addressInfo = NULL;
+
+        memset(&baseInfo, 0, sizeof(struct addrinfo));
+
+        baseInfo.ai_family = AF_UNSPEC;
+        getaddrinfo(address, 0, &baseInfo, &addressInfo);
+
+        // If address is IPv4, use that family of sockets
+        if(addressInfo->ai_family == AF_INET) {
+
+              // Create the socket
+              if((sock = socket(AF_INET, SOCK_STREAM, 0)) < 0) {
+                printf("Error opening stream socket");
+                  exit(1);
+              }
+
+              struct sockaddr_in server;
+              server.sin_family = AF_INET;
+              server.sin_port = htons(port);
+
+            /* Convert address to a network format */
+              inet_pton(AF_INET, address, &server.sin_addr.s_addr);
+
+            // Binding the socket to the port number(default is 8080)
+            if (bind(sock, (struct sockaddr *)&server, sizeof(server))) {
+                printf("Cannot bind socket. Either port is in use or given IP Address is in use.");
+                exit(1);
+            }
+        }
+
+        // If address is IPv6, use that family of sockets
+        if (addressInfo->ai_family == AF_INET6) {
+
+            // Create the socket
+            if ((sock = socket(AF_INET6, SOCK_STREAM, 0)) < 0) {
+                printf("Socket Error");
+                exit(1);
+            }
+
+            struct sockaddr_in6 server;
+            server.sin6_family = AF_INET6;
+            server.sin6_port = htons(port);
+
+            /* Convert address to a network format */
+            inet_pton(AF_INET6, address, &server.sin6_addr);
+
+            // Binding the socket to the port number(default is 8080)
+            if (bind(sock, (struct sockaddr *)&server, sizeof(server))) {
+                printf("Cannot bind socket. Either port is in use or given IP Address is in use.");
+                exit(1);
+            }
+        }
+    } else {
+        // Create the socket
+        if ((sock = socket(AF_INET6,SOCK_STREAM,0)) < 0) {
+            printf("Socket Error");
+            exit(1);
+        }
+
+        struct sockaddr_in6 server;
+        server.sin6_family = AF_INET6;
+        server.sin6_port = htons(port);
+        server.sin6_addr = in6addr_any;
+
+        if (debug)
+            printf("Listening on all IPv4 and IPv6 addresses\n");
+
+        // Binding the socket to the port number(default is 8080)
+        if (bind(sock, (struct sockaddr *)&server, sizeof(server))){
+            printf("Cannot bind socket. Either port is in use or given IP Address is in use.");
+            exit(1);
+        }
+    }
+
+
+
+    // Start listening on Socket. Max connections set to 20 for now.
+    if (listen(sock, MAX_CONNECTIONS) == -1){
+        printf("Socket listening error");
+        exit(1);
+    }
+
+    return sock;
+}
+
 void
 sig_handler(int signo)
 {
@@ -142,4 +288,3 @@ sig_handler(int signo)
         exit(0);
     }
 }
-
