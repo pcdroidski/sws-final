@@ -208,8 +208,6 @@ write_response(t_httpresp *resp, int fd)
             fputs("\n", f);
 
         }
-
-        printf("There are %d headers to write\n", resp->nheaders);
         
         for (i = 0; i < resp->nheaders; i++)
             fprintf(f, "%s: %s\n", resp->headers[i].name,
@@ -223,6 +221,9 @@ write_response(t_httpresp *resp, int fd)
         }
 
         fputs("\n", f);
+
+        /* Flush the output stream */
+        fflush(f);
 
         return true;
     }
