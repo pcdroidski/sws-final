@@ -1,8 +1,8 @@
 CC=gcc
 CFLAGS=-Wall -g
 
-SRC=net.c parser.c response_builder.c
-OBJ=net.o parser.o response_builder.o
+SRC=net.c parser.c response_builder.c serve.c
+OBJ=net.o parser.o response_builder.o serve.o
 EXE=sws
 
 MAINSRC=${SRC} main.c
