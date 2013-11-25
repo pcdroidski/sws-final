@@ -7,7 +7,7 @@
 #define TRUE 1
 #define FALSE 0
 
-#define CONNECTION_TIMEOUT_SECONDS 2
+#define CONNECTION_TIMEOUT_SECONDS 10
 
 extern int flags_i;
 
