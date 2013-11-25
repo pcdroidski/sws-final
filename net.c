@@ -187,6 +187,9 @@ handle_connection(int msgsock)
                 }
             }
 
+            finalize_response(res);
+            write_response(res, msgsock);
+
         } else {
             perror("getpeername");
         }

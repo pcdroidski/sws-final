@@ -66,7 +66,7 @@ response_set_header(t_httpresp *resp, char *name, char *value)
 {
     void *ptr;
     t_httpresp_header *hdr;
-    
+
     /* Sanity checks */
     if (resp == NULL || name == NULL || value == NULL) {
         return false;
@@ -90,7 +90,7 @@ response_set_header(t_httpresp *resp, char *name, char *value)
 
     if ( (hdr->name  = strdup(name) ) != NULL &&
          (hdr->value = strdup(value)) != NULL) {
-        
+
         /* Increment the number of stored headers */
         resp->nheaders++;
     } else {
@@ -115,9 +115,9 @@ finalize_response(t_httpresp *resp)
     }
 
     t = time(NULL);
-    if ((local = localtime(&t)) != NULL && 
+    if ((local = localtime(&t)) != NULL &&
         strftime(buf, BUFSZ, "%a, %d %b %Y %T %z", local) >= 0) {
-        
+
         /* Set the 'Date' response header */
         response_set_header(resp, HEADER_DATE, buf);
     }
@@ -167,7 +167,7 @@ write_response(t_httpresp *resp, int fd)
 {
     FILE *f;
     int i;
-    
+
     if ((f = fdopen(fd, "a")) != NULL) {
         fprintf(f, "%s/%d.%d   %d", resp->protocol,
             resp->major_version, resp->minor_version,
@@ -208,7 +208,7 @@ write_response(t_httpresp *resp, int fd)
             fputs("\n", f);
 
         }
-        
+
         for (i = 0; i < resp->nheaders; i++)
             fprintf(f, "%s: %s\n", resp->headers[i].name,
                 resp->headers[i].value);
