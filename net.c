@@ -90,7 +90,7 @@ run_server(char *address, int port)
             }
 
             // Get the incomming request address
-            if (inet_ntop(AF_INET,&remote.sin_addr.s_addr,
+            if (inet_ntop(AF_INET, &remote.sin_addr.s_addr,
                 incomming,INET_ADDRSTRLEN) == NULL) {
                 perror(strerror(errno));
             }
@@ -99,7 +99,7 @@ run_server(char *address, int port)
         if (debug)
             printf("One request from IP address: %s\n",incomming);
 
-        handle_connection(msgsock);
+        handle_connection(clientFD);
     } while (TRUE);
      
 }
