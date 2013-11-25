@@ -39,19 +39,19 @@
 
 /* Stores header information */
 typedef struct httpresponse_header_s {
-        char *name;
-        char *value;
+    char *name;
+    char *value;
 } t_httpresp_header;
 
 /* Stores a full HTTP response, including headers */
 typedef struct httpresponse_s {
-        int status;
-        char *protocol;
-        int major_version;
-        int minor_version;
-        t_httpresp_header *headers;
-        int nheaders;
-        char * content;
+    int status;
+    char *protocol;
+    int major_version;
+    int minor_version;
+    t_httpresp_header *headers;
+    int nheaders, headers_len;
+    char * content;
 } t_httpresp;
 
 /* Initialize a response with sensible defaults */
