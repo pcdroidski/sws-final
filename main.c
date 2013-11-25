@@ -113,7 +113,7 @@ main(int argc, char **argv)
 void
 usage(int code)
 {
-    puts("Usage");
+    puts("Usage: sws [-dh][-c dir][-i address][-l file][-p port]dir ");
     exit(code);
 }
 
