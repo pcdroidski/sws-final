@@ -8,15 +8,20 @@
 #include <stdio.h>
 #include <stdlib.h>
 #include <string.h>
+#include <sys/types.h>
+#include <sys/socket.h>
+#include <netdb.h>
+#include <unistd.h>
 
 #include "net.h"
 
 #define MSGBUFSZ 1024
+#define MAX_CONNECTIONS 20
 
 int sock;
 
 void
-run_server(struct sockaddr_in *server)
+run_server(char *address, int port)
 {
     int msgsock;
 
@@ -94,9 +99,8 @@ run_server(struct sockaddr_in *server)
         if (debug)
             printf("One request from IP address: %s\n",incomming);
 
-        int cid;
-        int REQUEST_LINE_MAX = 1024;
-
+        handle_connection(msgsock);
+    } while (TRUE);
      
 }
 
