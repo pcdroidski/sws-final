@@ -1,3 +1,6 @@
+#ifndef __PARSER_H__
+#define __PARSER_H__
+
 #include <string.h>
 #include <stdio.h>
 #include <stdlib.h>
@@ -32,3 +35,5 @@ typedef struct httpreq_s {
 
 t_methodtype ident_method(char *);
 t_httpreq *parse(char *);
+
+#endif

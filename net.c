@@ -14,6 +14,9 @@
 #include <unistd.h>
 
 #include "net.h"
+#include "parser.h"
+#include "response_builder.h"
+#include "serve.h"
 
 #define MSGBUFSZ 1024
 #define MAX_CONNECTIONS 20
@@ -101,7 +104,7 @@ run_server(char *address, int port)
 
         handle_connection(clientFD);
     } while (TRUE);
-     
+
 }
 
 void
@@ -115,6 +118,8 @@ handle_connection(int msgsock)
     char buf[INET6_ADDRSTRLEN];
     char msg[MSGBUFSZ];
     int nbytes;
+    t_httpreq *req;
+    t_httpresp *res;
 
     if ((pid = fork()) == 0) {
         /* Execute child code */
@@ -138,12 +143,33 @@ handle_connection(int msgsock)
             if (debug)
                 printf("Connection from %s:%d\n", buf, port);
 
-            /* Read a single message from the client */
+            /* Read one line from the client and parse it */
             if ((nbytes = read(msgsock, &msg, MSGBUFSZ-1)) >= 0) {
                 msg[nbytes-1] = '\0';
-                printf("%s: %s\n", buf, msg);
+
+                req = parse(msg);
+                res = init_response();
+
+                set_status(req, res);
+
+                printf("%s: %d\n", buf, res->status);
             } else {
                 perror("read socket");
+            }
+
+            // The stuff in the middle - this is where we check for timeouts
+
+            /* headers! read a line and do nothing with it */
+            while (1) {
+                if ((nbytes = read(msgsock, &msg, MSGBUFSZ-1)) == -1) {
+                    perror("read socket");
+                    exit(1);
+                }
+
+                // empty line, stop parsing headers
+                if (strncmp(msg, "\r\n", 2) == 0) {
+                    break;
+                }
             }
 
         } else {

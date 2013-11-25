@@ -1,8 +1,10 @@
+#ifndef __SERVE_H__
+#define __SERVE_H__
+
 #include "serve.h"
 
 void
-get_status(t_httpreq *req, t_httpresp *resp){
-
+set_status( t_httpreq *req, t_httpresp *resp) {
 
     if( strcmp(req->version, "0.9" ) == 0 ){
         if (req->valid &&
@@ -49,3 +51,5 @@ get_status(t_httpreq *req, t_httpresp *resp){
     }
 
 }
+
+#endif
