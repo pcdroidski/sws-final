@@ -20,7 +20,16 @@ According to the manual for sws(1):
 INSTALL
 Copy the files of sws to the desired directory and run the make(1) command.
 
-COPYWRITE (c) 2013
+BUILD ARTIFACTS
+sws: (make sws)
+The server executable. Run with -h for usage.
+
+unittest: (make test)
+Executes unit tests on the parser directly, based on the tests specified
+in test.in. Output is written to test.out and test results are written
+to stdout.
+
+COPYRIGHT (c) 2013
 
 BUGS
 None we hope.
