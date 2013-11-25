@@ -8,19 +8,15 @@
 #include <stdio.h>
 #include <stdlib.h>
 #include <string.h>
-#include <sys/types.h>
-#include <sys/socket.h>
-#include <netdb.h>
-#include <unistd.h>
+
 #include "net.h"
 
 #define MSGBUFSZ 1024
-#define MAX_CONNECTIONS 20
 
 int sock;
 
 void
-run_server(char *address, int port)
+run_server(struct sockaddr_in *server)
 {
     int msgsock;
 
@@ -101,21 +97,7 @@ run_server(char *address, int port)
         int cid;
         int REQUEST_LINE_MAX = 1024;
 
-        if ((cid = fork()) == 0) {
-            int receiveStatus = 0;
-            char totalheader[REQUEST_LINE_MAX];
-
-            // Waiting until a message is received
-            receiveStatus = read(clientFD, totalheader, REQUEST_LINE_MAX);
-
-            /** Parsing will go here */
-            if (read > 0){
-                printf("Receiving : %s \n", totalheader);
-            }
-        }
-        break;
-
-    } while (1);
+     
 }
 
 void
@@ -176,6 +158,7 @@ handle_connection(int msgsock)
         /* Execute parent code */
     }
 }
+
 
 int
 bind_socket(char *address, int port) {
@@ -255,8 +238,6 @@ bind_socket(char *address, int port) {
             exit(1);
         }
     }
-
-
 
     // Start listening on Socket. Max connections set to 20 for now.
     if (listen(sock, MAX_CONNECTIONS) == -1){
