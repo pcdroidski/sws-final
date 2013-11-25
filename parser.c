@@ -20,7 +20,7 @@ parse(char *input)
     req->valid = 1;
 
     /* Parse the HTTP method */
-    if ((token = strtok(inputdup, " ")) == NULL) {
+    if ((token = strtok(inputdup, " \t")) == NULL) {
         req->valid = 0;
     } else {
         /* Note: method may be null if strdup fails */
@@ -30,7 +30,7 @@ parse(char *input)
     }
 
     /* Parse the request URL */
-    if ((token = strtok(NULL, " ")) == NULL) {
+    if ((token = strtok(NULL, " \t")) == NULL) {
         req->valid = 0;
     } else {
         /* Note: url may be null if strdup fails */
@@ -39,7 +39,7 @@ parse(char *input)
     }
 
     /* Parse the HTTP version */
-    if ((token = strtok(NULL, " ")) != NULL) {
+    if ((token = strtok(NULL, " \t")) != NULL) {
         if (strncmp(token, "HTTP/", 5) != 0 ||  /* must start with HTTP/ */
             strlen(token) < 8 ||                /* must have a length of 8 */
             strchr(token+6, '.') == NULL) {     /* version must have a '.' */
