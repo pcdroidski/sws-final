@@ -1,4 +1,29 @@
 0 GET /index.html      HTTP/0.9
 0 GET /index.html      HTTP/1.0
 0 GET /index.html      HTTP/1.1
+0 HEAD /index.html      HTTP/1.0
+0 HEAD /index.html      HTTP/1.1
+0 HEAD /index.html  HTTP/0.9
+0 HEAD //index.html     HTTP/1.0
 1 GET /index.html      HTTP
+1 129384htg1 ./index.html HTTP/1.0
+1 HEAD i23u4n342f HTTP/1.0
+1 GET /index.html HTP/1.0
+1 GET  HTTP/1.0
+1 HEAD  HTTP/1.0
+1 GET /index.html ndfc091321234gtn134g0398gb02389gb
+1 HEAD index.html g231m98ugn9243e9-bn2 3109u4rng23
+1 234gft23 234g234 23g234g 234g234g g234g234g34 g2345g234 g234g234 2345g234g
+1 GET
+1 HEAD
+1
+1 23-4i9tj3294g-j23-g94jh9-34ghj49-hj4n-8954jh-8j524h-924jhrtg9ijqpsdokvmpoqijweg13894nj5gh92u34ngh90245nh9245nh9-2w48nh-90w24n8h50-924jth0-924 q3i4ng-23424905nh5-90245hn-024m5hgh0wermibopinwefbmondqwfbowsdndwfbpoksbndfposdbnd  HTTP/1.0
+1 head /index.html http/1.0
+1 get /index.html http/1.0
+1  /index.html HTTP/1.0
+0      GET    index.html HTTP/1.0
+0       GET    /index.html HTTP/1.0
+0 GET      /index.html HTTP/1.0
+0 GET      index.html HTTP/1.0
+0 GET /index.html HTTP/1.0
+1 BOB /index.html HTTP/1.0

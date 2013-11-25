@@ -13,29 +13,58 @@ parse(char *input)
 
     inputdup = strdup(input);
     req = (t_httpreq*)malloc(sizeof(t_httpreq));
+    if (req == NULL)
+        fprintf(stderr,"malloc cannot allocate memory for new request");
 
-    /* If left unspecified, the req uses HTTP/0.9 */
-    req->version = strdup(DEFAULT_VERSION);
-    req->versionlen = 3;
-    req->valid = 1;
+     req->version = strdup(DEFAULT_VERSION);
+     req->versionlen = 3;
+     req->valid = 1;
+
 
     /* Parse the HTTP method */
     if ((token = strtok(inputdup, " ")) == NULL) {
         req->valid = 0;
     } else {
-        /* Note: method may be null if strdup fails */
-        req->method = strdup(token);
-        req->methodlen = strlen(token);
+        /* Note: method may be null if strdup fails
+        * Below I tried to make sure that the method could not
+        * be overflowed. The method should only be written to
+        * the object if it is a valid method otherwise it should
+        * be NULL
+         */
+        if (strlen(token) > MAX_METHOD_LENGTH) {
+            req->method = NULL;
+        } else {
+            req->method = strdup(token);
+        }
+
+        if (req->method != NULL) {
+            req->methodlen = strlen(token);
+        } else {
+            req->valid=0;
+        }
+
         req->method_ident = ident_method(token);
+        if (req->method_ident == HTTP_OTHER) {
+            req->valid=0;
+        }
     }
 
     /* Parse the request URL */
     if ((token = strtok(NULL, " ")) == NULL) {
         req->valid = 0;
     } else {
-        /* Note: url may be null if strdup fails */
-        req->url = strdup(token);
-        req->urllen = strlen(token);
+        if (strlen(token) > MAX_URI_LENGTH) {
+            req->url = NULL;
+        } else {
+            req->url = strdup(token);
+        }
+
+        if (req->url != NULL) {
+            req->urllen = strlen(token);
+        } else {
+            req->valid=0;
+            req->urllen = -1;
+        }
     }
 
     /* Parse the HTTP version */
@@ -66,12 +95,18 @@ parse(char *input)
 
                     /* Note: Version may be null if strdup fails */
                     req->version = strdup(vbuf);
-                    req->versionlen = strlen(vbuf);
+                    if (req->version != NULL) {
+                        req->versionlen = strlen(vbuf);
+                    } else {
+                        req->versionlen = -1;
+                    }
                 }
             }
         }
     }
 
+    /* For no we need this to */
+    req->content = 1;
     free(inputdup);
     return req;
 }
