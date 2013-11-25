@@ -8,16 +8,21 @@
 #include <stdio.h>
 #include <stdlib.h>
 #include <string.h>
+#include <sys/time.h>
 #include <sys/types.h>
 #include <sys/socket.h>
 #include <netdb.h>
 #include <unistd.h>
 
 #include "net.h"
+#include "parser.h"
+#include "response_builder.h"
+#include "serve.h"
 
 #define MSGBUFSZ 1024
 #define MAX_CONNECTIONS 20
 
+int g_msgsock;
 int sock;
 
 void
@@ -101,7 +106,7 @@ run_server(char *address, int port)
 
         handle_connection(clientFD);
     } while (TRUE);
-     
+
 }
 
 void
@@ -115,6 +120,10 @@ handle_connection(int msgsock)
     char buf[INET6_ADDRSTRLEN];
     char msg[MSGBUFSZ];
     int nbytes;
+    t_httpreq *req;
+    t_httpresp *res;
+    struct sigaction timeout;
+    struct itimerval timer;
 
     if ((pid = fork()) == 0) {
         /* Execute child code */
@@ -138,12 +147,44 @@ handle_connection(int msgsock)
             if (debug)
                 printf("Connection from %s:%d\n", buf, port);
 
-            /* Read a single message from the client */
+            /* Store the socket fd globally so we can write to it in a
+             * signal handler */
+            g_msgsock = msgsock;
+
+            /* Read one line from the client and parse it */
             if ((nbytes = read(msgsock, &msg, MSGBUFSZ-1)) >= 0) {
                 msg[nbytes-1] = '\0';
-                printf("%s: %s\n", buf, msg);
+
+                req = parse(msg);
+                res = init_response();
+
+                set_status(req, res);
+
+                printf("%s: %d\n", buf, res->status);
             } else {
                 perror("read socket");
+            }
+
+            // The stuff in the middle - this is where we check for timeouts
+            memset(&timeout, 0, sizeof (timeout));
+            timeout.sa_handler = &sig_handler;
+            sigaction(SIGALRM, &timeout, NULL);
+
+            timer.it_value.tv_sec = CONNECTION_TIMEOUT_SECONDS;
+            timer.it_value.tv_usec = 0;
+            setitimer(ITIMER_REAL, &timer, NULL);
+
+            /* headers! read a line and do nothing with it */
+            while (1) {
+                if ((nbytes = read(msgsock, &msg, MSGBUFSZ-1)) == -1) {
+                    perror("read socket");
+                    exit(1);
+                }
+
+                // empty line, stop parsing headers
+                if (strncmp(msg, "\r\n", 2) == 0) {
+                    break;
+                }
             }
 
         } else {
@@ -256,6 +297,8 @@ void
 sig_handler(int signo)
 {
     pid_t pid;
+    t_httpresp *res;
+
     if (signo == SIGCHLD) {
         pid = wait(0);
         if (debug) {
@@ -266,6 +309,18 @@ sig_handler(int signo)
                 printf("Child process returned error result; %d; %s\n",
                         errno, strerror(errno));
         }
+    } else if (signo == SIGALRM) {
+        res = init_response();
+        if (res == NULL) {
+            fprintf(stderr, "malloc generating response error in timeout");
+            exit(1);
+        }
+
+        res->status = HTTP_TIMEOUT;
+        finalize_response(res);
+        write_response(res, g_msgsock);
+        close(g_msgsock);
+        exit(0);
     } else if (signo == SIGTERM || signo == SIGINT) {
         puts("Shutting down...");
         if (close(sock) != 0)
