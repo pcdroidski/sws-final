@@ -13,7 +13,7 @@
 #include <sys/socket.h>
 #include <netdb.h>
 #include <unistd.h>
-
+#include <fcntl.h>
 #include "net.h"
 #include "parser.h"
 #include "response_builder.h"
@@ -31,14 +31,14 @@ run_server(char *address, int port)
     int msgsock;
 
     if ((msgsock = bind_socket(address, port)) == -1) {
-         printf("Cannot start the server \n");
-       exit(1);
+        printf("Cannot start the server \n");
+        exit(1);
     }
 
-    /* Start Server */
+    /* - - Start Server - - */           
+    
     int clientFD;
     do {
-        char incomming[INET6_ADDRSTRLEN];
         struct addrinfo hint, *result;
         memset(&hint, 0, sizeof(struct addrinfo));
 
@@ -67,42 +67,39 @@ run_server(char *address, int port)
             struct sockaddr_in6 remote;
             socklen_t receive = INET6_ADDRSTRLEN;
             memset(&remote, 0, sizeof(struct sockaddr_in6));
-
+ 
             if ((clientFD = accept(msgsock, (struct sockaddr *)&remote,
                 &receive)) < 0) {
                 fprintf(stderr, "[ERROR]accept error\n");
                 exit(1);
             }
-
-            // Get the incomming request address from client
-            if (inet_ntop(AF_INET6, &remote.sin6_addr.s6_addr, incomming,
-                INET6_ADDRSTRLEN) == NULL){
-                perror(strerror(errno));
-            }
+ 
+            // // Get the incomming request address from client
+            // if (inet_ntop(AF_INET6, &remote.sin6_addr.s6_addr, incomming,
+            //     INET6_ADDRSTRLEN) == NULL){
+            //     perror(strerror(errno));
+            // }
         }
-
+ 
         // If it is a IPv4, using IPv4 address family.
         if (result -> ai_family == AF_INET) {
             struct sockaddr_in remote;
             socklen_t receive = INET_ADDRSTRLEN;
             memset(&remote, 0, sizeof(struct sockaddr_in));
-
+ 
             if ((clientFD = accept(msgsock, (struct sockaddr *)&remote,
                 &receive)) < 0) {
                 fprintf(stderr,"[ERROR]accept error\n");
                 perror(strerror(errno));
                 exit(1);
             }
-
-            // Get the incomming request address
-            if (inet_ntop(AF_INET, &remote.sin_addr.s_addr,
-                incomming,INET_ADDRSTRLEN) == NULL) {
-                perror(strerror(errno));
-            }
+ 
+            // // // Get the incomming request address
+            // if (inet_ntop(AF_INET, &remote.sin_addr.s_addr,
+            //     incomming,INET_ADDRSTRLEN) == NULL) {
+            //     perror(strerror(errno));
+            // }
         }
-
-        if (debug)
-            printf("One request from IP address: %s\n",incomming);
 
         handle_connection(clientFD);
     } while (TRUE);
@@ -133,7 +130,7 @@ handle_connection(int msgsock)
         if (getpeername(msgsock, (struct sockaddr *) &client, &len) == 0) {
 
             /* Handle IPv4 and IPv6 connections */
-            if (client.ss_family == AF_INET) {
+              if (client.ss_family == AF_INET) {
                 addr4 = (struct sockaddr_in *) &client;
                 port = ntohs(addr4->sin_port);
                 inet_ntop(AF_INET, &addr4->sin_addr, buf, sizeof(buf));
@@ -180,7 +177,7 @@ handle_connection(int msgsock)
                     perror("read socket");
                     exit(1);
                 }
-
+                
                 // empty line, stop parsing headers
                 if (strncmp(msg, "\r\n", 2) == 0) {
                     break;
@@ -242,7 +239,7 @@ bind_socket(char *address, int port) {
 
             // Binding the socket to the port number(default is 8080)
             if (bind(sock, (struct sockaddr *)&server, sizeof(server))) {
-                printf("Cannot bind socket. Either port is in use or given IP Address is in use.");
+                printf("Cannot bind socket. Either port is in use or given IP Address is in use. \n");
                 exit(1);
             }
         }
@@ -265,7 +262,7 @@ bind_socket(char *address, int port) {
 
             // Binding the socket to the port number(default is 8080)
             if (bind(sock, (struct sockaddr *)&server, sizeof(server))) {
-                printf("Cannot bind socket. Either port is in use or given IP Address is in use.");
+                printf("Cannot bind socket. Either port is in use or given IP Address is in use. \n");
                 exit(1);
             }
         }
@@ -286,14 +283,14 @@ bind_socket(char *address, int port) {
 
         // Binding the socket to the port number(default is 8080)
         if (bind(sock, (struct sockaddr *)&server, sizeof(server))){
-            printf("Cannot bind socket. Either port is in use or given IP Address is in use.");
+            printf("Cannot bind socket. Either port is in use or given IP Address is in use. \n");
             exit(1);
         }
     }
 
     // Start listening on Socket. Max connections set to 20 for now.
     if (listen(sock, MAX_CONNECTIONS) == -1){
-        printf("Socket listening error");
+        printf("Socket listening error \n");
         exit(1);
     }
 
@@ -319,7 +316,7 @@ sig_handler(int signo)
     } else if (signo == SIGALRM) {
         res = init_response();
         if (res == NULL) {
-            fprintf(stderr, "malloc generating response error in timeout");
+            fprintf(stderr, "malloc generating response error in timeout \n");
             exit(1);
         }
 

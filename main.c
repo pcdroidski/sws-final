@@ -10,6 +10,7 @@
 #include <stdlib.h>
 #include <string.h>
 
+#include "daemonize.h"
 #include "net.h"
 
 /* Flags */
@@ -38,82 +39,87 @@ void setup_options(int arc, char *argv[]);
 void
 setup_options(int argc, char *argv[])
 {
-    char opt;
-    while ((opt = getopt(argc, argv, "c:dhi:l:p:")) != -1) {
-        switch (opt) {
-        case 'c':
-            flags_c = 1;
-            cgi_dir = strdup(optarg);
-            break;
-        case 'd':
-            debug = TRUE;
-            break;
-        case 'h':
-            usage(0);
-            break;
-        case 'i':
-            flags_i = 1;
-            address = optarg;
-            break;
-        case 'l':
-            flags_l = 1;
-            log_file = strdup(optarg);
-            logging = TRUE;
-            break;
-        case 'p':
-            flags_p = 1;
-            port = atoi(optarg);
-            errno = 0;
-            if (errno == EINVAL || errno == ERANGE) {
-                perror("parsing port number");
-                exit(1);
-            } else if (port <= 0) {
-                printf("Can't bind to port: '%s'\n", optarg);
-                exit(1);
-            }
-            break;
-        }
-    }
+	char opt;
+	while ((opt = getopt(argc, argv, "c:dhi:l:p:")) != -1) {
+		switch (opt) {
+		case 'c':
+			flags_c = 1;
+			cgi_dir = strdup(optarg);
+			break;
+		case 'd':
+			debug = TRUE;
+			break;
+		case 'h':
+			usage(0);
+			break;
+		case 'i':
+			flags_i = 1;
+			address = optarg;
+			break;
+		case 'l':
+			flags_l = 1;
+			log_file = strdup(optarg);
+			logging = TRUE;
+			break;
+		case 'p':
+			flags_p = 1;
+			port = atoi(optarg);
+			errno = 0;
+			if (errno == EINVAL || errno == ERANGE) {
+				perror("parsing port number");
+				exit(1);
+			} else if (port <= 0) {
+				printf("Can't bind to port: '%s'\n", optarg);
+				exit(1);
+			}
+			break;
+		}
+	}
 
-    dir = argv[optind];
+	dir = argv[optind];
 
-    if (debug) {
-      if (flags_c) {
-        printf("CGI execution allowed from dir: %s \n", cgi_dir);
-      }
-      if (flags_i) {
-        printf("IP Address binded to: %s \n", address);
-      }
-      if (flags_l) {
-        printf("Logging all requests to: %s \n", log_file);
-      }
-      if (flags_p) {
-        printf("Configured to use port: %d \n", port);
-      }
-    }
+	if (debug) {
+        if (flags_c) {
+            printf("CGI execution allowed from dir: %s \n", cgi_dir);
+	  	}
+		if (flags_i) {
+            printf("IP Address binded to: %s \n", address);
+		}
+		if (flags_l) {
+            printf("Logging all requests to: %s \n", log_file);
+		}
+		if (flags_p) {
+            printf("Configured to use port: %d \n", port);
+		}
+	}
 }
 
 int
 main(int argc, char **argv)
 {
-    debug = FALSE;
-    logging = FALSE;
-    //logfilename = NULL;
+	debug = FALSE;
+	logging = FALSE;
+	//logfilename = NULL;
 
-    /* Read program options */
-    setup_options(argc, argv);
+	/* Read program options */
+	setup_options(argc, argv);
 
-    if (debug)
-        printf("Configured to use port: %d\n", port);
+	/* Create a daemon process if not in debug mode */
+	if (!debug){
+	   daemonize("sws-final");
+	}
 
-    run_server(address, port);
-    return 0;
+	if (debug)
+		printf("Configured to use port: %d\n", port);
+
+	run_server(address, port);
+	return 0;
 }
 
 void
 usage(int code)
 {
-    puts("Usage: sws [-dh][-c dir][-i address][-l file][-p port]dir ");
-    exit(code);
+	puts("Usage: sws [-dh][-c dir][-i address][-l file][-p port]dir \n");
+	exit(code);
 }
 
