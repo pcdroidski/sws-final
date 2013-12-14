@@ -193,6 +193,9 @@ handle_connection(int msgsock)
                 }
             }
 
+            finalize_response(res);
+            write_response(res, msgsock);
+
         } else {
             perror("getpeername");
         }
@@ -207,6 +210,10 @@ handle_connection(int msgsock)
         exit(0);
     } else {
         /* Execute parent code */
+
+        /* Close the socket connection */
+        if (close(msgsock) != 0)
+            perror("close");
     }
 }
 

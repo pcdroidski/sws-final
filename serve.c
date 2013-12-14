@@ -1,55 +1,55 @@
-#ifndef __SERVE_H__
-#define __SERVE_H__
-
 #include "serve.h"
 
 void
-set_status( t_httpreq *req, t_httpresp *resp) {
+set_status( t_httpreq *req, t_httpresp *resp)
+{
+    if (!req->valid) {
+        //400
+        resp->status = HTTP_BAD_REQUEST;
 
-    if( strcmp(req->version, "0.9" ) == 0 ){
-        if (req->valid &&
-            req->method_ident == HTTP_GET){
-                //200
-                resp->status = HTTP_OK;
-        }else if (req->valid &&
-                     ((req->method_ident == HTTP_POST) ||
-                         (req->method_ident == HTTP_HEAD))){
-                         //405
-                         resp->status = HTTP_METHOD_NOT_ALLOWED;
-        }else{
-              //400
-              resp->status = HTTP_BAD_REQUEST;
-        }
-    }else if(strcmp(req->version, "1.0") == 0 ){
-        if(req->valid  &&
-              (req->method_ident == HTTP_GET ||
-                  req->method_ident == HTTP_HEAD)){
-                  //200
-                  resp->status = HTTP_OK;
-        }else if(req->valid && req->method_ident == HTTP_POST){
-                  //501
-                  resp->status = HTTP_NOT_IMPLEMENTED;
-        }else if(req->valid == 0){
-                  //400
-                 resp->status = HTTP_BAD_REQUEST;
-        }
-   }else if( strcmp(req->version, "1.1") == 0){
-        if (req->valid &&
-               ((req->method_ident == HTTP_GET) ||
-                   (req->method_ident == HTTP_HEAD) ||
-                       req->method_ident == HTTP_POST)){
-                       //505
-                       resp->status = HTTP_VERSION_NOT_SUPPORTED;
-        }else{
+    } else if ( req->majorversion == 0 && req->minorversion == 9 ) {
+        /* Handle HTTP/0.9 Requests */
+        switch (req->method_ident) {
+        case HTTP_GET:
+            //200
+            resp->status = HTTP_OK;
+            break;
+        default:
             //400
             resp->status = HTTP_BAD_REQUEST;
         }
-
-    }else{
-        //500
-        resp->status = HTTP_SERVER_ERROR;
+    } else if (req->majorversion == 1 && req->minorversion == 0) {
+        /* Handle HTTP/1.0 Requests */
+        switch (req->method_ident) {
+        case HTTP_GET:
+        case HTTP_HEAD:
+            //200
+            resp->status = HTTP_OK;
+            break;
+        case HTTP_POST:
+            //501
+            resp->status = HTTP_NOT_IMPLEMENTED;
+            break;
+        default:
+            //400
+            resp->status = HTTP_BAD_REQUEST;
+        }
+    } else if (req->majorversion == 1 && req->minorversion == 1) {
+        /* Handle HTTP/1.1 Requests */
+        switch (req->method_ident) {
+        case HTTP_GET:
+        case HTTP_HEAD:
+        case HTTP_POST:
+            //505
+            resp->status = HTTP_VERSION_NOT_SUPPORTED;
+            break;
+        default:
+            //400
+            resp->status = HTTP_BAD_REQUEST;
+        }
+    } else {
+        /* Handle other HTTP versions */
+        //505
+        resp->status = HTTP_VERSION_NOT_SUPPORTED;
     }
-
 }
-
-#endif
