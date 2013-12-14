@@ -40,7 +40,7 @@ run_server(char *address, int port)
     
     /* Create a daemon process if not in debug mode */
     if (!debug){
-        if (daemonize("sws-final") < 0){
+        if (daemonize("sws-final") > 0){
             perror("daemon");
             exit(1);
         }

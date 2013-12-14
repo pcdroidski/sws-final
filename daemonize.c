@@ -12,7 +12,8 @@ int
 daemonize(const char *cmd)
 {
     /* File descriptors */
-    // int fd0, fd1;
+    int fd0, fd1, fd2;
+
     /* Variables */
 	pid_t process_id;
 	struct rlimit r_limit;
@@ -58,14 +59,24 @@ daemonize(const char *cmd)
 	/* Change the current working directory to the root */
 	if(chdir("/") < 0)
 		fprintf(stderr, "Cannot change directory to / \n");
-	
 
-    
-    /* TODO */
-    /* 
-        1) Add any logic handling for server logs 
-        2) Close & redirect standard FDs 
-    */
+	/* Close FDs */
+	if (r_limit.rlim_max == RLIM_INFINITY){
+		r_limit.rlim_max = 1024;
+	}
+
+	int i;
+	for (i = 0; i < r_limit.rlim_max; i++){
+		close(i);
+	}
+
+	/* Set the FDs of stdin, stdout and stderr to dev/null */
+	fd0 = open("dev/null", O_RDWR);
+	fd1 = dup(0);
+	fd2 = dup(0);
+	fd0 += 0;
+	fd1 += 0;
+	fd2 += 0;
     
     return 0;
 }
