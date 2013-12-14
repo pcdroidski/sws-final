@@ -6,13 +6,15 @@
 #include <unistd.h>
 #include <signal.h>
 #include <stdio.h>
+#include <stdlib.h>
 
 
-int 
+void 
 daemonize(const char *cmd)
 {
     /* File descriptors */
     int fd0, fd1, fd2;
+    int i;
 
     /* Variables */
 	pid_t process_id;
@@ -25,15 +27,15 @@ daemonize(const char *cmd)
 	/* Fetch maximum number of file descriptors for the given system */
 	if (getrlimit(RLIMIT_NOFILE, &r_limit) < 0){
 		fprintf(stderr,"%s unable to fetch file limit", cmd);
-        return 1;   
+        exit(0);   
 	}
 	
     /* Begin forking */
 	if ((process_id = fork()) < 0){
 		fprintf(stderr,"%s fork failed", cmd);
-		return 1;
+		exit(1);
 	} else if(process_id != 0){
-		return 1;
+		exit(0);
     }
     
     /* Set session ID */
@@ -46,26 +48,27 @@ daemonize(const char *cmd)
     
 	if (sigaction(SIGHUP, &sigac, NULL) < 0){
 		fprintf(stderr,"%s cannot ignore SIGHUP", cmd);
-		return 1;
+		exit(1);
 	}
 
 	if ((process_id = fork()) < 0){
 		fprintf(stderr,"%s fork failed", cmd);
-		return 1;
+		exit(1);
 	} else if(process_id != 0){
-        return 1;
+        exit(0);        
     }
 
 	/* Change the current working directory to the root */
-	if(chdir("/") < 0)
+	if(chdir("/") < 0){
 		fprintf(stderr, "Cannot change directory to / \n");
+		exit(0);
+	}
 
 	/* Close FDs */
 	if (r_limit.rlim_max == RLIM_INFINITY){
 		r_limit.rlim_max = 1024;
 	}
 
-	int i;
 	for (i = 0; i < r_limit.rlim_max; i++){
 		close(i);
 	}
@@ -74,9 +77,11 @@ daemonize(const char *cmd)
 	fd0 = open("dev/null", O_RDWR);
 	fd1 = dup(0);
 	fd2 = dup(0);
-	fd0 += 0;
-	fd1 += 0;
-	fd2 += 0;
+
+	openlog(cmd, LOG_CONS, LOG_DAEMON);
+	if (fd0 != 0 || fd1 != 1 || fd2 != 2){
+		syslog(LOG_ERR, "File descriptors unexpected %d %d %d", fd0, fd1, fd2);
+		exit(1);
+	}
     
-    return 0;
 }

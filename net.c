@@ -18,7 +18,6 @@
 #include "parser.h"
 #include "response_builder.h"
 #include "serve.h"
-#include "daemonize.h"
 
 #define MSGBUFSZ 1024
 #define MAX_CONNECTIONS 20
@@ -32,19 +31,11 @@ run_server(char *address, int port)
     int msgsock;
 
     if ((msgsock = bind_socket(address, port)) == -1) {
-         printf("Cannot start the server \n");
-       exit(1);
+        printf("Cannot start the server \n");
+        exit(1);
     }
 
     /* - - Start Server - - */           
-    
-    /* Create a daemon process if not in debug mode */
-    if (!debug){
-        if (daemonize("sws-final") > 0){
-            perror("daemon");
-            exit(1);
-        }
-    }
     
     int clientFD;
     do {
