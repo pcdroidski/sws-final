@@ -79,24 +79,19 @@ setup_options(int argc, char *argv[])
 	dir = argv[optind];
 
 	if (debug) {
-		if (flags_c) {
-		printf("CGI execution allowed from dir: %s \n", cgi_dir);
+        if (flags_c) {
+            printf("CGI execution allowed from dir: %s \n", cgi_dir);
 	  	}
 		if (flags_i) {
-		printf("IP Address binded to: %s \n", address);
+            printf("IP Address binded to: %s \n", address);
 		}
 		if (flags_l) {
-		printf("Logging all requests to: %s \n", log_file);
+            printf("Logging all requests to: %s \n", log_file);
 		}
 		if (flags_p) {
-		printf("Configured to use port: %d \n", port);
+            printf("Configured to use port: %d \n", port);
 		}
-		
-		/* Create a daemon process if not in debug mode */
-		if (!debug){
-				daemonize("sws-final");
-			}
-		}
+	}
 }
 
 int
@@ -108,6 +103,11 @@ main(int argc, char **argv)
 
 	/* Read program options */
 	setup_options(argc, argv);
+
+	/* Create a daemon process if not in debug mode */
+	if (!debug){
+	   daemonize("sws-final");
+	}
 
 	if (debug)
 		printf("Configured to use port: %d\n", port);
