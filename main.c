@@ -32,7 +32,7 @@ char *cgi_dir = NULL;
 void
 usage(int);
 
-void setup_options(int arc, char *argv[]);
+void setup_options(int argc, char *argv[]);
 
 
 /** Fetch all options passed in arv */
