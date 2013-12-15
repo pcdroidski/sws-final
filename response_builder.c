@@ -296,6 +296,10 @@ write_response(t_httpresp *resp, int fd)
         fputs("\n", f);
 
         if (resp->content_length > 0) {
+
+            /* Flush the output stream */
+            fflush(f);
+
             if (resp->content_fd != -1) {
                 
                 /* Zero out our buffer because it is being reused */
@@ -303,7 +307,7 @@ write_response(t_httpresp *resp, int fd)
 
                 /* Read from the fd and write to the response */
                 while ((nbytes = read(resp->content_fd, buf, BUFSZ)) > 0) {
-                    fputs(buf, f);
+                    fwrite(buf, sizeof(char), nbytes, f);
                 }
 
             } else if (resp->content != NULL) {
