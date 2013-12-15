@@ -18,6 +18,7 @@
 #include "parser.h"
 #include "response_builder.h"
 #include "serve.h"
+#include "path.h"
 
 #define MSGBUFSZ 1024
 #define MAX_CONNECTIONS 20
@@ -35,8 +36,8 @@ run_server(char *address, int port)
         exit(1);
     }
 
-    /* - - Start Server - - */           
-    
+    /* - - Start Server - - */
+
     int clientFD;
     do {
         struct addrinfo hint, *result;
@@ -67,33 +68,33 @@ run_server(char *address, int port)
             struct sockaddr_in6 remote;
             socklen_t receive = INET6_ADDRSTRLEN;
             memset(&remote, 0, sizeof(struct sockaddr_in6));
- 
+
             if ((clientFD = accept(msgsock, (struct sockaddr *)&remote,
                 &receive)) < 0) {
                 fprintf(stderr, "[ERROR]accept error\n");
                 exit(1);
             }
- 
+
             // // Get the incomming request address from client
             // if (inet_ntop(AF_INET6, &remote.sin6_addr.s6_addr, incomming,
             //     INET6_ADDRSTRLEN) == NULL){
             //     perror(strerror(errno));
             // }
         }
- 
+
         // If it is a IPv4, using IPv4 address family.
         if (result -> ai_family == AF_INET) {
             struct sockaddr_in remote;
             socklen_t receive = INET_ADDRSTRLEN;
             memset(&remote, 0, sizeof(struct sockaddr_in));
- 
+
             if ((clientFD = accept(msgsock, (struct sockaddr *)&remote,
                 &receive)) < 0) {
                 fprintf(stderr,"[ERROR]accept error\n");
                 perror(strerror(errno));
                 exit(1);
             }
- 
+
             // // // Get the incomming request address
             // if (inet_ntop(AF_INET, &remote.sin_addr.s_addr,
             //     incomming,INET_ADDRSTRLEN) == NULL) {
@@ -177,7 +178,7 @@ handle_connection(int msgsock)
                     perror("read socket");
                     exit(1);
                 }
-                
+
                 // empty line, stop parsing headers
                 if (strncmp(msg, "\r\n", 2) == 0) {
                     break;

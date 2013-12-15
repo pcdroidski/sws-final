@@ -1,7 +1,7 @@
 #include "serve.h"
 
 void
-set_status( t_httpreq *req, t_httpresp *resp)
+set_status(t_httpreq *req, t_httpresp *resp)
 {
     if (!req->valid) {
         //400
