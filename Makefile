@@ -2,8 +2,13 @@ CC=gcc
 CFLAGS=-Wall -g
 LIBS=-lmagic
 
+<<<<<<< HEAD
+SRC=net.c parser.c response_builder.c serve.c daemonize.c
+OBJ=net.o parser.o response_builder.o serve.o daemonize.o
+=======
 SRC=net.c parser.c response_builder.c serve.c path.c daemonize.c
 OBJ=net.o parser.o response_builder.o serve.o path.o daemonize.o
+>>>>>>> e607ec27052a07b4c9338367db5731630443c6a7
 EXE=sws
 
 MAINSRC=${SRC} main.c
