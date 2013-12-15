@@ -50,3 +50,20 @@ makeIndex( char * const *dir, char *index ){
     strcat(index,HTML_TAIL);
     return;
 }
+
+int main(int argc, char **argv) {
+    char *index;
+
+    index=malloc(MAX_DIR_PAGE + 1);
+
+char *dir = ".";
+
+makeIndex(&dir,index);
+
+
+
+printf("%s",index);
+
+
+
+}
