@@ -22,9 +22,9 @@ main(int argc, char **argv)
     /* Not an effective test, but spits out some response to stdout */
     t_httpresp *resp;
     resp = init_response();
-    resp->status = HTTP_OK;
 
-    resp->content = strdup("This is the response body.");
+    response_set_text(resp, "This is the response body");
+    //response_set_file(resp, "image.png");
 
     finalize_response(resp);
     write_response(resp, 1);

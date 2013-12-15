@@ -51,7 +51,8 @@ typedef struct httpresponse_s {
     int minor_version;
     t_httpresp_header *headers;
     int nheaders, headers_len;
-    char * content;
+    char *content, *content_type;
+    int content_fd, content_length;
 } t_httpresp;
 
 /* Initialize a response with sensible defaults */
@@ -61,6 +62,14 @@ init_response();
 /* Add a header to the HTTP response */
 bool
 response_set_header(t_httpresp *, char *name, char *value);
+
+/* Setup the response content to serve a file */
+bool
+response_set_file(t_httpresp *, char *path);
+
+/* Setup the response content to serve some text */
+bool
+response_set_text(t_httpresp *, char *text);
 
 /* Prepare the response to be sent-
  * this should be called when ALL the necessary
