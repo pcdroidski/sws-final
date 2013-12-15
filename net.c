@@ -185,6 +185,7 @@ handle_connection(int msgsock)
                 }
             }
 
+            // response_set_file(res, "/path/to/image.png");
             finalize_response(res);
             write_response(res, msgsock);
 

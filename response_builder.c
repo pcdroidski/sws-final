@@ -10,10 +10,16 @@
 
 #include <sys/utsname.h>
 
+#include <errno.h>
+#include <fcntl.h>
+#include <magic.h>
 #include <stdio.h>
 #include <stdlib.h>
 #include <string.h>
+#include <sys/types.h>
+#include <sys/stat.h>
 #include <time.h>
+#include <unistd.h>
 
 #include "response_builder.h"
 
@@ -36,12 +42,17 @@ init_response()
     }
 
     /* Intialize the default values */
+    resp->status = HTTP_OK;
     resp->headers = NULL;
     resp->nheaders = 0;
     resp->headers_len = 0;
     resp->protocol = strdup("HTTP");
     resp->major_version = 1;
     resp->minor_version = 0;
+    resp->content = NULL;
+    resp->content_fd = -1;
+    resp->content_length = 0;
+    resp->content_type = NULL;
 
     /* Print the server name, version and host information */
     if ((nchars = sprintf(buf, "%s %s", SERVER_NAME, SERVER_VERSION)) > 0) {
@@ -103,11 +114,72 @@ response_set_header(t_httpresp *resp, char *name, char *value)
 }
 
 bool
+response_set_file(t_httpresp *resp, char *path)
+{
+    struct stat st;
+    const char *mime;
+    magic_t mag;
+    int fd;
+    
+    if (stat(path, &st) == -1) {
+
+        switch (errno) {
+        case ENOENT:
+            /* File not found */
+            resp->status = HTTP_NOT_FOUND;
+            break;
+
+        default:
+            /* Other error */
+            resp->status = HTTP_SERVER_ERROR;
+        }
+
+        return false;
+    }
+
+    /* Get the file's MIME type */
+    mag = magic_open(MAGIC_MIME_TYPE |
+                     MAGIC_NO_CHECK_COMPRESS | MAGIC_NO_CHECK_TAR |
+                     MAGIC_NO_CHECK_TOKENS | MAGIC_NO_CHECK_TROFF);
+    magic_load(mag, NULL);
+    mime = strdup(magic_file(mag, path));
+    magic_close(mag);
+
+    /* Open the file for reading */
+    if ((fd = open(path, O_RDONLY)) == -1) {
+        /* Failed to open the file */
+        resp->status = HTTP_SERVER_ERROR;
+        return false;
+    }
+
+    /* Setup the response content */
+    resp->content_fd = fd;
+    resp->content_length = st.st_size;
+    resp->content_type = mime;
+
+    return true;
+}
+
+bool
+response_set_text(t_httpresp *resp, char *text)
+{
+    if (resp == NULL) {
+        return false;
+    }
+    
+    /* Set the content and content-length */
+    if ((resp->content = text) != NULL) {
+        resp->content_length = strlen(resp->content);
+    }
+    
+    return true;
+}
+
+bool
 finalize_response(t_httpresp *resp)
 {
     time_t t;
     struct tm *local;
-    int nchars;
 
     /* Quick sanity check */
     if (resp == NULL) {
@@ -122,11 +194,15 @@ finalize_response(t_httpresp *resp)
         response_set_header(resp, HEADER_DATE, buf);
     }
 
-    nchars = resp->content != NULL ? strlen(resp->content) : 0;
-    if (sprintf(buf, "%d", nchars) > 0) {
+    if (sprintf(buf, "%d", resp->content_length) > 0) {
         /* Set the 'Content-Length' response header */
         response_set_header(resp, HEADER_CONTENT_LENGTH, buf);
     }
+
+    /* Set the 'Content-Type' response header */
+    response_set_header(resp, HEADER_CONTENT_TYPE,
+            (resp->content_type == NULL ?
+                "text/html" : resp->content_type));
 
     /* Response is reasdy to be sent */
     return true;
@@ -140,10 +216,14 @@ free_response(t_httpresp *resp)
         return;
 
     /* Free the things that are dynamically allocated */
-    if (resp->content != NULL)
-        free(resp->content);
+    if (resp->content_type != NULL)
+        free(resp->content_type);
     if (resp->protocol != NULL)
         free(resp->protocol);
+
+    /* Close the file descriptor if it's open */
+    if (resp->content_fd != -1)
+        (void) close(resp->content_fd);
 
     /* Free the headers */
     if (resp->headers != NULL) {
@@ -166,7 +246,7 @@ bool
 write_response(t_httpresp *resp, int fd)
 {
     FILE *f;
-    int i;
+    int i, nbytes;
 
     if ((f = fdopen(fd, "a")) != NULL) {
         fprintf(f, "%s/%d.%d   %d", resp->protocol,
@@ -215,8 +295,27 @@ write_response(t_httpresp *resp, int fd)
 
         fputs("\n", f);
 
-        if (resp->content != NULL && strlen(resp->content) != 0) {
-            fputs(resp->content, f);
+        if (resp->content_length > 0) {
+
+            /* Flush the output stream */
+            fflush(f);
+
+            if (resp->content_fd != -1) {
+                
+                /* Zero out our buffer because it is being reused */
+                memset(buf, 0, BUFSZ); 
+
+                /* Read from the fd and write to the response */
+                while ((nbytes = read(resp->content_fd, buf, BUFSZ)) > 0) {
+                    fwrite(buf, sizeof(char), nbytes, f);
+                }
+
+            } else if (resp->content != NULL) {
+
+                /* Write the text content to the response */
+                fputs(resp->content, f);
+            }
+
             fputs("\n", f);
         }
 
