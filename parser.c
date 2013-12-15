@@ -118,7 +118,7 @@ ident_method(char *method)
         return HTTP_GET;
     } else if (strcmp(method, "HEAD") == 0) {
         return HTTP_HEAD;
-    } else if (strcmp(method, "POST") == 0) {       /* POST is later */
+    } else if (strcmp(method, "POST") == 0) {
         return HTTP_POST;
     } else {
         return HTTP_OTHER;
