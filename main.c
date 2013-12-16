@@ -12,6 +12,7 @@
 
 #include "daemonize.h"
 #include "net.h"
+#include "logging.h"
 
 #define PATH_MAX 4096
 
@@ -92,6 +93,19 @@ setup_options(int argc, char *argv[])
 		}
 		if (flags_p) {
             printf("Configured to use port: %d \n", port);
+		}
+	} else if (flags_l){
+        if (flags_c) {
+            logInfo(("CGI execution allowed from dir: %s \n", cgi_dir), log_file);
+	  	}
+		if (flags_i) {
+            logInfo(("IP Address binded to: %s \n", address), log_file);
+		}
+		if (flags_l) {
+            logInfo(("Logging all requests to: %s \n", log_file), log_file);
+		}
+		if (flags_p) {
+            logInfo(("Configured to use port: %d \n", port), log_file);
 		}
 	}
 }

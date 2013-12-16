@@ -2,15 +2,15 @@ CC=gcc
 CFLAGS=-Wall -g
 LIBS=-lmagic
 
-SRC=net.c parser.c response_builder.c serve.c path.c daemonize.c dir_index.c
-OBJ=net.o parser.o response_builder.o serve.o path.o daemonize.o dir_index.o
+SRC=net.c parser.c response_builder.c serve.c path.c daemonize.c dir_index.c logging.c
+OBJ=net.o parser.o response_builder.o serve.o path.o daemonize.o dir_index.o logging.o
 EXE=sws
 
 MAINSRC=${SRC} main.c
 MAINOBJ=${OBJ} main.o
 
-TESTSRC=parser.c response_builder.c test.c path.c dir_index.c
-TESTOBJ=parser.o response_builder.o test.o path.o dir_index.o
+TESTSRC=parser.c response_builder.c test.c path.c dir_index.c logging.c
+TESTOBJ=parser.o response_builder.o test.o path.o dir_index.o logging.o
 TESTEXE=unittest
 
 ${EXE}: ${MAINOBJ}
