@@ -9,8 +9,8 @@ EXE=sws
 MAINSRC=${SRC} main.c
 MAINOBJ=${OBJ} main.o
 
-TESTSRC=parser.c response_builder.c test.c
-TESTOBJ=parser.o response_builder.o test.o
+TESTSRC=parser.c response_builder.c test.c path.c dir_index.c
+TESTOBJ=parser.o response_builder.o test.o path.o dir_index.o
 TESTEXE=unittest
 
 ${EXE}: ${MAINOBJ}

@@ -7,7 +7,7 @@
 0 HEAD //index.html     HTTP/1.0
 1 GET /index.html      HTTP
 1 129384htg1 ./index.html HTTP/1.0
-1 HEAD i23u4n342f HTTP/1.0
+0 HEAD i23u4n342f HTTP/1.0
 1 GET /index.html HTP/1.0
 1 GET  HTTP/1.0
 1 HEAD  HTTP/1.0
