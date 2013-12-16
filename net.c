@@ -18,6 +18,7 @@
 #include "parser.h"
 #include "response_builder.h"
 #include "serve.h"
+#include "path.h"
 
 #define MSGBUFSZ 1024
 #define MAX_CONNECTIONS 20

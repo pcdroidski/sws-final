@@ -2,21 +2,42 @@
 
 /**
  * Normalizes a given path
- * Returns the path joined with the current webroot (defined currently as CWD)
+ * Returns the path with ~'s resolved
  * Returns NULL if the path exceeds the webroot (i.e. /../../../)
  */
 char *path_normalize(char *path) {
     int i, level;
+    char *realpath, username[NAME_SZ];
+    struct passwd *userent;
 
-    i = level = 0;
+    level = 0;
+
+    if ((realpath = (char *)malloc(PATH_MAX)) == NULL) {
+        printf("Failed to malloc.\n");
+        exit(1);
+    }
+
+    username[0] = realpath[0] = '\0';
 
     if (path == NULL) {
         return NULL;
     } else if (path[0] == '/') {
-        i++;
+        path++;
     }
 
-    for (; path[i] != '\0';) {
+    if (path[0] == '~') {
+        for (i = 1; path[i] != '/' && path[i] != '\0'; i++) ;
+        strncat(username, path+1, i-1);
+
+        path += i;
+
+        if ((userent = getpwnam(username)) == NULL) {
+            return NULL;
+        }
+        strcat(realpath, userent->pw_dir);
+    }
+
+    for (i = 0; path[i] != '\0'; ) {
         if (strcmp(&path[i], "..") == 0) {
             level--;
             i += 2;
@@ -36,9 +57,6 @@ char *path_normalize(char *path) {
         }
     }
 
-    /* Always return a relative path */
-    if (path[0] == '/')
-        return path + 1;
-
-    return path;
+    strcat(realpath, path);
+    return realpath;
 }
