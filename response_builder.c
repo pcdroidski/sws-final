@@ -196,25 +196,17 @@ response_set_text(t_httpresp *resp, char *text)
 
 bool
 response_set_cgi(t_httpresp *resp, char *path, char *cgi_path){
-    int templength = strlen(path) - CGI_LEN, i;
+    int templength = strlen(path) - 9, i;
     char tempDir[templength + 1];
 
     for (i = 0; i< templength; i++){
-        tempDir[i] = path[CGI_LEN + i];
+        tempDir[i] = path[9 + i];
     }
     char requestDir[MAX_LEN];
 
     strcpy(requestDir, cgi_path);
     strcat(requestDir, "/");
-
-    for (i = 0; i < strlen(tempdir); i++){
-        querystring[i] = tempDir[i];                            
-    }
-
     strcat(requestDir, tempDir);
-
-
-
 
     return finalize_cgi(resp, requestDir);
 }
@@ -257,9 +249,11 @@ finalize_cgi(t_httpresp *resp, char *path){
             }
             if (pid == 0){
                 char temp[MAX_LEN] = "";
+                char *envir[] = {"PATH=/tmp", tmp, NULL};
 
+                /* Push output of result to orginal socket descriptor */
                 dup2(resp->client_fd, STDOUT_FILENO);
-                if (execle(path, "", (char *) 0, env_init) < 0){
+                if (execle(path, "", (char *) 0, envir) < 0){
                     resp->status = HTTP_SERVER_ERROR;
                     return false;
                 }

@@ -71,7 +71,14 @@ response_set_file(t_httpresp *, char *path, time_t modifiedsince);
 
 /* Setup the response content to serve some text */
 bool
-response_set_text(t_httpresp *, char *text);
+response_set_text(t_httpresp *, char *path);
+
+bool
+finalize_cgi(t_httpresp *resp, char *path);
+
+/* Setup the cgi response */
+bool
+response_set_cgi(t_httpresp *, char *path);
 
 /* Prepare the response to be sent-
  * this should be called when ALL the necessary
