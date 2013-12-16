@@ -10,6 +10,7 @@
 #define CONNECTION_TIMEOUT_SECONDS 10
 
 extern int flags_i;
+extern char *cgi_dir;
 
 bool debug;
 bool logging;

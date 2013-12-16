@@ -15,6 +15,7 @@
 #include <netdb.h>
 #include <unistd.h>
 #include <fcntl.h>
+#include <sys/stat.h>
 #include "net.h"
 #include "parser.h"
 #include "response_builder.h"
@@ -24,12 +25,50 @@
 #define MSGBUFSZ 1024
 #define MAX_CONNECTIONS 20
 
+char CGI_root[4096];
 int g_msgsock;
 int sock;
 
 void
 run_server(char *address, int port)
 {
+    /* Setup CGI - if avail */
+    if(flags_c == 1){
+        if (cgi_dir == NULL){
+            if (debug){
+               fprintf(stderr,"CGI root directory is missing \n");
+            }
+            exit(1);
+        }
+
+        if (realpath(cgi_dir, CGI_root) == NULL){
+            if (debug){
+               fprintf(stderr,"CGI root directory error. Check the CGI dir provided \n");
+            }
+            exit(1);        
+        }
+
+        
+        struct stat cgi_buf;
+        if (stat(CGI_root, &cgi_buf) == -1){
+            if (debug){
+               fprintf(stderr,"CGI root stat error \n");
+            }
+            exit(1);
+        }
+
+        if (!S_ISDIR(cgi_buf.st_mode)){
+            if (debug){
+               fprintf(stderr,"CGI root must not be a directory \n");
+            }
+
+            exit(1);
+        }
+        
+        if (debug)
+            printf("CGI root set to: %s \n", CGI_root);
+   }
+    
     int msgsock;
 
     if ((msgsock = bind_socket(address, port)) == -1) {
@@ -171,7 +210,7 @@ handle_connection(int msgsock)
             } else {
                 perror("read socket");
             }
-
+            
             // The stuff in the middle - this is where we check for timeouts
             memset(&timeout, 0, sizeof (timeout));
             timeout.sa_handler = &sig_handler;
@@ -191,9 +230,16 @@ handle_connection(int msgsock)
                 }
             }
 
-            response_set_file(res, req->url, req->ifmodifiedsince);
+            /** Handle logic for CGI vs other request */            
+            if (flags_c == 1 && strncmp(req->url, "cgi-bin/", 8) == 0){
+                response_set_cgi(res, req->url, CGI_root, req->ifmodifiedsince);
+                
+            } else {
+                response_set_file(res, req->url, req->ifmodifiedsince);
+            }    
+
             finalize_response(res);
-            write_response(res, msgsock);
+            write_response(res, msgsock); 
 
         } else {
             perror("getpeername");

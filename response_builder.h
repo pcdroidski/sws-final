@@ -38,6 +38,9 @@
 #define true  1
 #endif
 
+extern bool debug;
+extern int flags_c;
+
 /* Stores header information */
 typedef struct httpresponse_header_s {
     char *name;
@@ -71,7 +74,11 @@ response_set_file(t_httpresp *, char *path, time_t modifiedsince);
 
 /* Setup the response content to serve some text */
 bool
-response_set_text(t_httpresp *, char *text);
+response_set_text(t_httpresp *, char *path);
+
+/* Setup the cgi response */
+bool
+response_set_cgi(t_httpresp *, char *path, char *cgi_path, time_t modifiedsince);
 
 /* Prepare the response to be sent-
  * this should be called when ALL the necessary
