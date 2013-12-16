@@ -29,9 +29,9 @@ typedef struct httpreq_s {
     int versionlen;             /* length of http version */
     int majorversion;           /* HTTP/X.Y => X */
     int minorversion;           /* HTTP/X.Y => Y */
-    char *statuscode;           /* The statuscode of the request*/
-    int content;                /* boolean for content returned from GET*/
-    //TODO headers map
+    char *statuscode;           /* The statuscode of the request */
+    int content;                /* boolean for content returned from GET */
+    time_t ifmodifiedsince;     /* value of If-Modified-Since header (or -1) */
 } t_httpreq;
 
 t_methodtype ident_method(char *);

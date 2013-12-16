@@ -20,7 +20,7 @@ parse(char *input)
      req->version = strdup(DEFAULT_VERSION);
      req->versionlen = 3;
      req->valid = 1;
-
+     req->ifmodifiedsince = -1;
 
     /* Parse the HTTP method */
     if ((token = strtok(inputdup, " ")) == NULL) {

@@ -117,13 +117,13 @@ response_set_header(t_httpresp *resp, char *name, char *value)
 }
 
 bool
-response_set_file(t_httpresp *resp, char *path)
+response_set_file(t_httpresp *resp, char *path, time_t modifiedsince)
 {
     struct stat st;
     const char *mime;
     magic_t mag;
     int fd;
-    
+
     if (stat(path, &st) == -1) {
 
         switch (errno) {
@@ -131,7 +131,7 @@ response_set_file(t_httpresp *resp, char *path)
             /* File not found */
             resp->status = HTTP_NOT_FOUND;
             if (strcmp(path, FILE_404_PAGE) != 0)
-                return response_set_file(resp, FILE_404_PAGE);
+                return response_set_file(resp, FILE_404_PAGE, -1);
             break;
 
         default:
@@ -140,6 +140,13 @@ response_set_file(t_httpresp *resp, char *path)
         }
 
         return false;
+    }
+
+    resp->lastmodified = st.st_mtime;
+
+    if (modifiedsince != -1 && modifiedsince > st.st_mtime) {
+        resp->status = HTTP_NOT_MODIFIED;
+        return true;
     }
 
     /* Get the file's MIME type */
@@ -178,12 +185,12 @@ response_set_text(t_httpresp *resp, char *text)
     if (resp == NULL) {
         return false;
     }
-    
+
     /* Set the content and content-length */
     if ((resp->content = text) != NULL) {
         resp->content_length = strlen(resp->content);
     }
-    
+
     return true;
 }
 
@@ -200,10 +207,16 @@ finalize_response(t_httpresp *resp)
 
     t = time(NULL);
     if ((local = localtime(&t)) != NULL &&
-        strftime(buf, BUFSZ, "%a, %d %b %Y %T %z", local) >= 0) {
+        strftime(buf, BUFSZ, "%a, %d %b %Y %T %z", local)) {
 
         /* Set the 'Date' response header */
         response_set_header(resp, HEADER_DATE, buf);
+    }
+
+    if ((local = localtime(&(resp->lastmodified))) != NULL &&
+        strftime(buf, BUFSZ, "%a, %d %b %Y %T %z", local)) {
+        /* Set the 'Last-Modified' response header */
+        response_set_header(resp, HEADER_LAST_MODIFIED, buf);
     }
 
     if (sprintf(buf, "%d", resp->content_length) > 0) {
@@ -313,9 +326,9 @@ write_response(t_httpresp *resp, int fd)
             fflush(f);
 
             if (resp->content_fd != -1) {
-                
+
                 /* Zero out our buffer because it is being reused */
-                memset(buf, 0, BUFSZ); 
+                memset(buf, 0, BUFSZ);
 
                 /* Read from the fd and write to the response */
                 while ((nbytes = read(resp->content_fd, buf, BUFSZ)) > 0) {
