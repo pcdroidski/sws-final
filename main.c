@@ -106,6 +106,19 @@ main(int argc, char **argv)
 
 	/* Read program options */
 	setup_options(argc, argv);
+    
+    /* Setup Loggin */
+    if (flags_l == 1){
+        if (debug)
+            printf("Setting up log files ");
+        
+        if ((logfd = open(log_file,O_RDWR | O_APPEND | O_CREAT, 
+        S_IRUSR | S_IWUSR | S_IRGRP | S_IROTH)) < 0){
+            
+                
+                
+        }
+    }
 
 	/* Create a daemon process if not in debug mode */
 	if (!debug){
