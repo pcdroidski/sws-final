@@ -12,9 +12,7 @@
 void 
 daemonize(const char *cmd, const char *webroot)
 {
-    /* File descriptors */
-    int fd0, fd1, fd2;
-    int i;
+    int fdnull, i;
 
     /* Variables */
 	pid_t process_id;
@@ -74,14 +72,17 @@ daemonize(const char *cmd, const char *webroot)
 	}
 
 	/* Set the FDs of stdin, stdout and stderr to dev/null */
-	fd0 = open("dev/null", O_RDWR);
-	fd1 = dup(0);
-	fd2 = dup(0);
+    close(fileno(stdin));
+	fdnull = open("dev/null", O_RDWR);
+    dup2(fdnull, fileno(stdout));
+    dup2(fdnull, fileno(stderr));
 
 	openlog(cmd, LOG_CONS, LOG_DAEMON);
+    /* Commenting for Issue #21
 	if (fd0 != 0 || fd1 != 1 || fd2 != 2){
 		syslog(LOG_ERR, "File descriptors unexpected %d %d %d", fd0, fd1, fd2);
 		exit(1);
 	}
+    */
     
 }
