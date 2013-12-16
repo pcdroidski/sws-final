@@ -6,9 +6,9 @@ Jordan Scales, Nick Smith, Patrick Cedrowski, Paul-Anthony Dudzinski
 README
 sws is a simple web server designed to implement HTTP 1.0 requests for the 
 final project of CS631 APUE. The webserver currently implements GET and 
-HEAD requests and returns the appropriate status code based on RFC1945. In
-the future sws will implement other features to be assigned in future project
-milestones. 
+HEAD requests and returns the appropriate status code based on RFC1945.
+sws 0.2 introduces CGI execution functionality, directory indexing, file
+serving and proper daemonization.
 
 HISTORY
 According to the manual for sws(1):

@@ -27,7 +27,7 @@
 
 #define BUFSZ       4096
 #define SERVER_NAME     "sws"
-#define SERVER_VERSION  "0.1"
+#define SERVER_VERSION  "0.2"
 
 #define FILE_404_PAGE   "404.html"
 
