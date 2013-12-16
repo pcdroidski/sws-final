@@ -54,6 +54,7 @@ typedef struct httpresponse_s {
     int nheaders, headers_len;
     char *content, *content_type;
     int content_fd, content_length;
+    time_t lastmodified;
 } t_httpresp;
 
 /* Initialize a response with sensible defaults */

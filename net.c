@@ -187,7 +187,7 @@ handle_connection(int msgsock)
             /* headers! read a line and do nothing with it */
             while ((nbytes = sock_readline(msgsock, msg, MSGBUFSZ)) >= 0) {
                 if (strncmp(msg, "If-Modified-Since: ", 19) == 0) {
-                    strptime(&msg[19], "%A %B %d %Y, %H:%M:%S", headertm);
+                    strptime(&msg[19], "%a, %d %b %Y %T %z", headertm);
                     if (headertm != NULL) {
                         req->ifmodifiedsince = mktime(headertm);
                     }

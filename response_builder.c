@@ -142,6 +142,8 @@ response_set_file(t_httpresp *resp, char *path, time_t modifiedsince)
         return false;
     }
 
+    resp->lastmodified = st.st_mtime;
+
     if (modifiedsince != -1 && modifiedsince > st.st_mtime) {
         resp->status = HTTP_NOT_MODIFIED;
         return true;
@@ -205,10 +207,16 @@ finalize_response(t_httpresp *resp)
 
     t = time(NULL);
     if ((local = localtime(&t)) != NULL &&
-        strftime(buf, BUFSZ, "%a, %d %b %Y %T %z", local) >= 0) {
+        strftime(buf, BUFSZ, "%a, %d %b %Y %T %z", local)) {
 
         /* Set the 'Date' response header */
         response_set_header(resp, HEADER_DATE, buf);
+    }
+
+    if ((local = localtime(&(resp->lastmodified))) != NULL &&
+        strftime(buf, BUFSZ, "%a, %d %b %Y %T %z", local)) {
+        /* Set the 'Last-Modified' response header */
+        response_set_header(resp, HEADER_LAST_MODIFIED, buf);
     }
 
     if (sprintf(buf, "%d", resp->content_length) > 0) {
