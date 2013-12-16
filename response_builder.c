@@ -22,6 +22,7 @@
 #include <unistd.h>
 
 #include "response_builder.h"
+#include "dir_index.h"
 
 #define BUFSZ       4096
 #define SERVER_NAME     "sws"
@@ -155,11 +156,18 @@ response_set_file(t_httpresp *resp, char *path)
         resp->status = HTTP_SERVER_ERROR;
         return false;
     }
-
     /* Setup the response content */
-    resp->content_fd = fd;
-    resp->content_length = st.st_size;
-    resp->content_type = mime;
+    if (S_ISDIR(st.st_mode)){
+        char *index;
+        index=malloc(MAX_DIR_PAGE + 1);
+        
+        makeIndex(path,index);
+        response_set_text(resp,index);
+    }else{
+        resp->content_fd = fd;
+        resp->content_length = st.st_size;
+        resp->content_type = mime;
+    }
 
     return true;
 }
