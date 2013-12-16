@@ -18,7 +18,6 @@
 #include "parser.h"
 #include "response_builder.h"
 #include "serve.h"
-#include "path.h"
 
 #define MSGBUFSZ 1024
 #define MAX_CONNECTIONS 20
@@ -185,7 +184,7 @@ handle_connection(int msgsock)
                     break;
             }
 
-            // response_set_file(res, "/path/to/image.png");
+            response_set_file(res, req->url);
             finalize_response(res);
             write_response(res, msgsock);
 
