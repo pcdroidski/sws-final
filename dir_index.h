@@ -12,4 +12,4 @@
 
 
 void
-makeIndex( char * const *dir, char *index );
+makeIndex( char *dir, char *index );
