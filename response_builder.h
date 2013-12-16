@@ -38,6 +38,7 @@
 #define true  1
 #endif
 
+extern bool debug;
 extern int flags_c;
 
 /* Stores header information */

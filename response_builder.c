@@ -198,17 +198,17 @@ response_set_text(t_httpresp *resp, char *text)
 
 bool
 response_set_cgi(t_httpresp *resp, char *path, char *cgi_path, time_t modifiedsince){
-    int templength = strlen(path) - 9, i;
+    int templength = strlen(path) - 8, i;
     char tempDir[templength + 1];
 
     for (i = 0; i< templength; i++){
-        tempDir[i] = path[9 + i];
+        tempDir[i] = path[8 + i];
     }
     char requestDir[MAX_LENGTH];
 
     strcpy(requestDir, cgi_path);
     strcat(requestDir, "/");
-    strcat(requestDir, tempDir);
+    strcat(requestDir, tempDir);    
 
     return finalize_cgi(resp, requestDir, modifiedsince);
 }
@@ -227,7 +227,7 @@ finalize_cgi(t_httpresp *resp, char *path, time_t modifiedsince){
         resp->status = HTTP_NOT_FOUND;
         return false;
     }
-
+        
     if (stat(path, &st) == -1){
         resp->status = HTTP_SERVER_ERROR;
         return false; 
@@ -237,12 +237,15 @@ finalize_cgi(t_httpresp *resp, char *path, time_t modifiedsince){
         /** If DIR then handle it like normal file */
         return response_set_file(resp, path, modifiedsince);
     } else {
+        if (debug)
+            printf("Checking permissions of %s \n", path);
+        
         /** Check to make sure file has execution permissions */
         if (access(path, X_OK) != 0){
             resp->status = HTTP_FORBIDDEN;
             return false;
-        } else {
-        //TODO If not a GET- add logic for POST
+        } else {            
+            //TODO If not a GET- add logic for POST
             int pid;
 
             if ((pid = fork()) < 0){
@@ -252,6 +255,9 @@ finalize_cgi(t_httpresp *resp, char *path, time_t modifiedsince){
             if (pid == 0){
                 char temp[MAX_LENGTH] = "";
                 char *envir[] = {"PATH=/tmp", temp, NULL};
+                
+                printf("org FD: %d \n", resp->content_fd);
+                printf("cgi script: %s \n", path);
 
                 /* Push output of result to orginal socket descriptor */
                 dup2(resp->content_fd, STDOUT_FILENO);
@@ -259,6 +265,8 @@ finalize_cgi(t_httpresp *resp, char *path, time_t modifiedsince){
                     resp->status = HTTP_SERVER_ERROR;
                     return false;
                 }
+                printf("Execution is ok \n");
+                
             }
         }
     }   

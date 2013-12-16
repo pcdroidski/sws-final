@@ -1,6 +1,6 @@
 #include "dir_index.h"
 
-inline int
+int
 compare_strings(const char *s1, const char *s2)
 {
         return strcasecmp(*s2 == '.' ? s2+1 : s2, *s1 == '.' ? s1+1 : s1);

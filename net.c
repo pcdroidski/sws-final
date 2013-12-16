@@ -210,7 +210,7 @@ handle_connection(int msgsock)
             } else {
                 perror("read socket");
             }
-
+            
             // The stuff in the middle - this is where we check for timeouts
             memset(&timeout, 0, sizeof (timeout));
             timeout.sa_handler = &sig_handler;
@@ -230,20 +230,23 @@ handle_connection(int msgsock)
                 }
             }
 
-            /** Handle logic for CGI vs other request */
-            if (debug)
-                printf("Request is: %s \n%s \n", req->method, req-> url);
-            
+            /** Handle logic for CGI vs other request */            
             int c;
             char cgi_test[9] = "";
-            for (c = 0; c < 9; c ++){
+            for (c = 0; c < 8; c ++){
                 cgi_test[c] = req->url[c];
             }
+            
+            printf("cgi_test: %s \n", cgi_test);
+            
+            printf("FD is: %d \n", msgsock);
+            
 
-            if (flags_c == 1 && strcmp(cgi_test, "/cgi-bin/") == 0){
+            if (flags_c == 1 && strcmp(cgi_test, "cgi-bin/") == 0){
                 response_set_cgi(res, req-> url, CGI_root, req->ifmodifiedsince);
                 finalize_response(res);
-
+                write_response(res, msgsock); 
+                
             } else {
                 response_set_file(res, req->url, req->ifmodifiedsince);
                 finalize_response(res);
