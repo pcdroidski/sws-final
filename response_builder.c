@@ -206,9 +206,6 @@ response_set_cgi(t_httpresp *resp, char *path, char *cgi_path, time_t modifiedsi
     if (sprintf(tpath, "%s/%s", cgi_path, &path[8]) < 0)
         return false;
 
-    if (debug)
-        printf("Resolved CGI path to %s\n", tpath);
-
     /** Check existence of the file requested */
     if (access(tpath, F_OK) != 0){
         resp->status = HTTP_NOT_FOUND;
@@ -224,9 +221,6 @@ response_set_cgi(t_httpresp *resp, char *path, char *cgi_path, time_t modifiedsi
         /** If DIR then handle it like normal file */
         return response_set_file(resp, tpath, modifiedsince);
     } else {
-        if (debug)
-            printf("Checking permissions of %s \n", tpath);
-        
         /** Check to make sure file has execution permissions */
         if (access(tpath, X_OK) != 0){
             resp->status = HTTP_FORBIDDEN;
@@ -243,11 +237,6 @@ response_set_cgi(t_httpresp *resp, char *path, char *cgi_path, time_t modifiedsi
                 char *envir[] = {"PATH=/tmp", temp, NULL};
                 close(p[0]);
                 
-                if (debug) {
-                    printf("org FD: %d \n", resp->content_fd);
-                    printf("cgi script: %s \n", tpath);
-                }
-
                 /* Push output of result to orginal socket descriptor */
                 dup2(p[1], STDOUT_FILENO);
                 if (execle(tpath, "", (char *) 0, envir) < 0){
