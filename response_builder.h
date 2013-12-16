@@ -80,9 +80,6 @@ response_set_text(t_httpresp *, char *path);
 bool
 response_set_cgi(t_httpresp *, char *path, char *cgi_path, time_t modifiedsince);
 
-bool
-finalize_cgi(t_httpresp *resp, char *path, time_t modifiedsince);
-
 /* Prepare the response to be sent-
  * this should be called when ALL the necessary
  * headers and the content body have been added.

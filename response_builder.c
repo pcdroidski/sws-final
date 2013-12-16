@@ -12,6 +12,7 @@
 
 #include <errno.h>
 #include <fcntl.h>
+#include <limits.h>
 #include <magic.h>
 #include <stdio.h>
 #include <stdlib.h>
@@ -122,7 +123,7 @@ bool
 response_set_file(t_httpresp *resp, char *path, time_t modifiedsince)
 {
     struct stat st;
-    const char *mime;
+    char *mime;
     magic_t mag;
     int fd;
 
@@ -198,77 +199,70 @@ response_set_text(t_httpresp *resp, char *text)
 
 bool
 response_set_cgi(t_httpresp *resp, char *path, char *cgi_path, time_t modifiedsince){
-    int templength = strlen(path) - 8, i;
-    char tempDir[templength + 1];
-
-    for (i = 0; i< templength; i++){
-        tempDir[i] = path[8 + i];
-    }
-    char requestDir[MAX_LENGTH];
-
-    strcpy(requestDir, cgi_path);
-    strcat(requestDir, "/");
-    strcat(requestDir, tempDir);    
-
-    return finalize_cgi(resp, requestDir, modifiedsince);
-}
-
-
-bool
-finalize_cgi(t_httpresp *resp, char *path, time_t modifiedsince){
     struct stat st;
+    int pid, p[2];
+    char tpath[MAX_LENGTH];
 
-    if (resp == NULL){
+    if (sprintf(tpath, "%s/%s", cgi_path, &path[8]) < 0)
         return false;
-    }   
+
+    if (debug)
+        printf("Resolved CGI path to %s\n", tpath);
 
     /** Check existence of the file requested */
-    if (access(path, F_OK) != 0){
+    if (access(tpath, F_OK) != 0){
         resp->status = HTTP_NOT_FOUND;
         return false;
     }
         
-    if (stat(path, &st) == -1){
+    if (stat(tpath, &st) == -1){
         resp->status = HTTP_SERVER_ERROR;
         return false; 
     }
 
     if (S_ISDIR(st.st_mode)){
         /** If DIR then handle it like normal file */
-        return response_set_file(resp, path, modifiedsince);
+        return response_set_file(resp, tpath, modifiedsince);
     } else {
         if (debug)
-            printf("Checking permissions of %s \n", path);
+            printf("Checking permissions of %s \n", tpath);
         
         /** Check to make sure file has execution permissions */
-        if (access(path, X_OK) != 0){
+        if (access(tpath, X_OK) != 0){
             resp->status = HTTP_FORBIDDEN;
             return false;
         } else {            
             //TODO If not a GET- add logic for POST
-            int pid;
 
-            if ((pid = fork()) < 0){
+            if (pipe(p) == -1 || (pid = fork()) < 0){
                 resp-> status = HTTP_SERVER_ERROR;
                 return false;
             }
             if (pid == 0){
                 char temp[MAX_LENGTH] = "";
                 char *envir[] = {"PATH=/tmp", temp, NULL};
+                close(p[0]);
                 
-                if (debug)
+                if (debug) {
                     printf("org FD: %d \n", resp->content_fd);
-                    printf("cgi script: %s \n", path);
+                    printf("cgi script: %s \n", tpath);
+                }
 
                 /* Push output of result to orginal socket descriptor */
-                dup2(resp->content_fd, STDOUT_FILENO);
-                if (execle(path, "", (char *) 0, envir) < 0){
+                dup2(p[1], STDOUT_FILENO);
+                if (execle(tpath, "", (char *) 0, envir) < 0){
                     resp->status = HTTP_SERVER_ERROR;
                     return false;
-                }                
+                }
+                exit(0);
+            } else {
+                close(p[1]);
+                resp->content_fd = p[0];
+                resp->content_length = INT_MIN;
+                printf("Hidey Ho, piping from %d\n", p[0]);
             }
         }
-    }   
+    }
 
     return true;
 }
@@ -298,9 +292,11 @@ finalize_response(t_httpresp *resp)
         response_set_header(resp, HEADER_LAST_MODIFIED, buf);
     }
 
-    if (sprintf(buf, "%d", resp->content_length) > 0) {
-        /* Set the 'Content-Length' response header */
-        response_set_header(resp, HEADER_CONTENT_LENGTH, buf);
+    if (resp->content_length >= 0) {
+        if (sprintf(buf, "%d", resp->content_length) > 0) {
+            /* Set the 'Content-Length' response header */
+            response_set_header(resp, HEADER_CONTENT_LENGTH, buf);
+        }
     }
 
     /* Set the 'Content-Type' response header */
@@ -397,30 +393,31 @@ write_response(t_httpresp *resp, int fd)
             fprintf(f, "%s: %s\n", resp->headers[i].name,
                 resp->headers[i].value);
 
-        fputs("\n", f);
+        /* Flush the output stream */
+        fflush(f);
 
-        if (resp->content_length > 0) {
+        if (resp->content_fd != -1) {
 
-            /* Flush the output stream */
-            fflush(f);
-
-            if (resp->content_fd != -1) {
-
-                /* Zero out our buffer because it is being reused */
-                memset(buf, 0, BUFSZ);
-
-                /* Read from the fd and write to the response */
-                while ((nbytes = read(resp->content_fd, buf, BUFSZ)) > 0) {
-                    fwrite(buf, sizeof(char), nbytes, f);
-                }
-
-            } else if (resp->content != NULL) {
-
-                /* Write the text content to the response */
-                fputs(resp->content, f);
+            if (resp->content_length > 0) {
+                fputs("\n", f);
             }
 
-            fputs("\n", f);
+            /* Zero out our buffer because it is being reused */
+            memset(buf, 0, BUFSZ);
+
+            /* Read from the fd and write to the response */
+            while ((nbytes = read(resp->content_fd, buf, BUFSZ)) > 0) {
+                fwrite(buf, sizeof(char), nbytes, f);
+            }
+
+        } else if (resp->content != NULL) {
+
+            if (resp->content_length > 0) {
+                fputs("\n", f);
+            }
+
+            /* Write the text content to the response */
+            fputs(resp->content, f);
         }
 
         fputs("\n", f);

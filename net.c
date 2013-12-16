@@ -25,7 +25,7 @@
 #define MSGBUFSZ 1024
 #define MAX_CONNECTIONS 20
 
-char CGI_root[128];
+char CGI_root[4096];
 int g_msgsock;
 int sock;
 
@@ -231,27 +231,15 @@ handle_connection(int msgsock)
             }
 
             /** Handle logic for CGI vs other request */            
-            int c;
-            char cgi_test[9] = "";
-            for (c = 0; c < 8; c ++){
-                cgi_test[c] = req->url[c];
-            }
-            
-            printf("cgi_test: %s \n", cgi_test);
-            
-            printf("FD is: %d \n", msgsock);
-            
-
-            if (flags_c == 1 && strcmp(cgi_test, "cgi-bin/") == 0){
-                response_set_cgi(res, req-> url, CGI_root, req->ifmodifiedsince);
-                finalize_response(res);
-                write_response(res, msgsock); 
+            if (flags_c == 1 && strncmp(req->url, "cgi-bin/", 8) == 0){
+                response_set_cgi(res, req->url, CGI_root, req->ifmodifiedsince);
                 
             } else {
                 response_set_file(res, req->url, req->ifmodifiedsince);
-                finalize_response(res);
-                write_response(res, msgsock); 
             }    
+
+            finalize_response(res);
+            write_response(res, msgsock); 
 
         } else {
             perror("getpeername");
