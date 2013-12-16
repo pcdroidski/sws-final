@@ -1,4 +1,5 @@
 #include "parser.h"
+#include "path.h"
 
 #define MAX_VERSION_LENGTH      6
 #define DEFAULT_VERSION     "0.9"
@@ -56,7 +57,7 @@ parse(char *input)
         if (strlen(token) > MAX_URI_LENGTH) {
             req->url = NULL;
         } else {
-            req->url = strdup(token);
+            req->url = strdup(path_normalize(token));
         }
 
         if (req->url != NULL) {

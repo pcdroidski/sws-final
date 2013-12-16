@@ -11,4 +11,4 @@
 
 
 void 
-daemonize(const char *cmd);
+daemonize(const char *cmd, const char *webroot);

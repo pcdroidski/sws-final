@@ -10,7 +10,7 @@
 
 
 void 
-daemonize(const char *cmd)
+daemonize(const char *cmd, const char *webroot)
 {
     /* File descriptors */
     int fd0, fd1, fd2;
@@ -59,8 +59,8 @@ daemonize(const char *cmd)
     }
 
 	/* Change the current working directory to the root */
-	if(chdir("/") < 0){
-		fprintf(stderr, "Cannot change directory to / \n");
+	if(chdir(webroot) < 0){
+		fprintf(stderr, "Cannot change directory to %s\n", webroot);
 		exit(0);
 	}
 
