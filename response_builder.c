@@ -30,6 +30,8 @@
 
 #define FILE_404_PAGE   "404.html"
 
+#define MAX_LENGTH 128
+
 char buf[BUFSZ];
 
 t_httpresp *
@@ -195,25 +197,25 @@ response_set_text(t_httpresp *resp, char *text)
 }
 
 bool
-response_set_cgi(t_httpresp *resp, char *path, char *cgi_path){
+response_set_cgi(t_httpresp *resp, char *path, char *cgi_path, time_t modifiedsince){
     int templength = strlen(path) - 9, i;
     char tempDir[templength + 1];
 
     for (i = 0; i< templength; i++){
         tempDir[i] = path[9 + i];
     }
-    char requestDir[MAX_LEN];
+    char requestDir[MAX_LENGTH];
 
     strcpy(requestDir, cgi_path);
     strcat(requestDir, "/");
     strcat(requestDir, tempDir);
 
-    return finalize_cgi(resp, requestDir);
+    return finalize_cgi(resp, requestDir, modifiedsince);
 }
 
 
 bool
-finalize_cgi(t_httpresp *resp, char *path){
+finalize_cgi(t_httpresp *resp, char *path, time_t modifiedsince){
     struct stat st;
 
     if (resp == NULL){
@@ -233,7 +235,7 @@ finalize_cgi(t_httpresp *resp, char *path){
 
     if (S_ISDIR(st.st_mode)){
         /** If DIR then handle it like normal file */
-        return response_set_file(resp, path);
+        return response_set_file(resp, path, modifiedsince);
     } else {
         /** Check to make sure file has execution permissions */
         if (access(path, X_OK) != 0){
@@ -248,11 +250,11 @@ finalize_cgi(t_httpresp *resp, char *path){
                 return false;
             }
             if (pid == 0){
-                char temp[MAX_LEN] = "";
-                char *envir[] = {"PATH=/tmp", tmp, NULL};
+                char temp[MAX_LENGTH] = "";
+                char *envir[] = {"PATH=/tmp", temp, NULL};
 
                 /* Push output of result to orginal socket descriptor */
-                dup2(resp->client_fd, STDOUT_FILENO);
+                dup2(resp->content_fd, STDOUT_FILENO);
                 if (execle(path, "", (char *) 0, envir) < 0){
                     resp->status = HTTP_SERVER_ERROR;
                     return false;

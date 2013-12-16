@@ -15,6 +15,7 @@
 #include <netdb.h>
 #include <unistd.h>
 #include <fcntl.h>
+#include <sys/stat.h>
 #include "net.h"
 #include "parser.h"
 #include "response_builder.h"
@@ -24,12 +25,50 @@
 #define MSGBUFSZ 1024
 #define MAX_CONNECTIONS 20
 
+char CGI_root[128];
 int g_msgsock;
 int sock;
 
 void
 run_server(char *address, int port)
 {
+    /* Setup CGI - if avail */
+    if(flags_c == 1){
+        if (cgi_dir == NULL){
+            if (debug){
+               fprintf(stderr,"CGI root directory is missing \n");
+            }
+            exit(1);
+        }
+
+        if (realpath(cgi_dir, CGI_root) == NULL){
+            if (debug){
+               fprintf(stderr,"CGI root directory error. Check the CGI dir provided \n");
+            }
+            exit(1);        
+        }
+
+        
+        struct stat cgi_buf;
+        if (stat(CGI_root, &cgi_buf) == -1){
+            if (debug){
+               fprintf(stderr,"CGI root stat error \n");
+            }
+            exit(1);
+        }
+
+        if (!S_ISDIR(cgi_buf.st_mode)){
+            if (debug){
+               fprintf(stderr,"CGI root must not be a directory \n");
+            }
+
+            exit(1);
+        }
+        
+        if (debug)
+            printf("CGI root set to: %s \n", CGI_root);
+   }
+    
     int msgsock;
 
     if ((msgsock = bind_socket(address, port)) == -1) {
@@ -192,6 +231,9 @@ handle_connection(int msgsock)
             }
 
             /** Handle logic for CGI vs other request */
+            if (debug)
+                printf("Request is: %s \n%s \n", req->method, req-> url);
+            
             int c;
             char cgi_test[9] = "";
             for (c = 0; c < 9; c ++){
@@ -199,7 +241,7 @@ handle_connection(int msgsock)
             }
 
             if (flags_c == 1 && strcmp(cgi_test, "/cgi-bin/") == 0){
-                response_set_cgi(res, req-> url, "/cgi-bin");
+                response_set_cgi(res, req-> url, CGI_root, req->ifmodifiedsince);
                 finalize_response(res);
 
             } else {
