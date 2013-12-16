@@ -7,9 +7,10 @@ makeIndex( char *dir, char *index ){
     int fts_options = FTS_NOCHDIR | FTS_PHYSICAL;
     int memleft= MAX_DIR_PAGE - (strlen(HTML_HEAD)+strlen(HTML_TAIL));
     int memlist=0;
+    char * paths[2] = {dir, NULL};
 
     memcpy(index,HTML_HEAD,strlen(HTML_HEAD));
-    if ((ftsp = fts_open((char * const *)dir, fts_options, NULL)) == NULL) {
+    if ((ftsp = fts_open(paths, fts_options, NULL)) == NULL) {
             fprintf(stderr,"fts_open failed");
             return; /*make sure to catch this error*/
         }

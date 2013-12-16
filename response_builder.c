@@ -161,7 +161,7 @@ response_set_file(t_httpresp *resp, char *path)
         char *index;
         index=malloc(MAX_DIR_PAGE + 1);
         
-        makeIndex(&path,index);
+        makeIndex(path,index);
         response_set_text(resp,index);
     }else{
         resp->content_fd = fd;
