@@ -107,6 +107,15 @@ run_server(char *address, int port)
 
 }
 
+int
+sock_readline(int sockfd, char *buf, int sz)
+{
+    int i;
+    for (i = 0; read(sockfd, &buf[i], 1) > 0 && buf[i] != '\n'; i++);
+    buf[i-1] = '\0';
+    return i;
+}
+
 void
 handle_connection(int msgsock)
 {
@@ -150,9 +159,7 @@ handle_connection(int msgsock)
             g_msgsock = msgsock;
 
             /* Read one line from the client and parse it */
-            if ((nbytes = read(msgsock, &msg, MSGBUFSZ-1)) >= 0) {
-                msg[nbytes-1] = '\0';
-
+            if ((nbytes = sock_readline(msgsock, msg, MSGBUFSZ)) >= 0) {
                 req = parse(msg);
                 res = init_response();
 
@@ -173,16 +180,9 @@ handle_connection(int msgsock)
             setitimer(ITIMER_REAL, &timer, NULL);
 
             /* headers! read a line and do nothing with it */
-            while (1) {
-                if ((nbytes = read(msgsock, &msg, MSGBUFSZ-1)) == -1) {
-                    perror("read socket");
-                    exit(1);
-                }
-
-                // empty line, stop parsing headers
-                if (strncmp(msg, "\r\n", 2) == 0) {
+            while ((nbytes = sock_readline(msgsock, msg, MSGBUFSZ)) >= 0) {
+                if (msg[0] == '\0')
                     break;
-                }
             }
 
             // response_set_file(res, "/path/to/image.png");

@@ -17,6 +17,9 @@ bool logging;
 void
 run_server(char *address, int port);
 
+int
+sock_readline(int sockfd, char *, int);
+
 void
 handle_connection(int);
 
