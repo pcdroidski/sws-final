@@ -16,6 +16,7 @@
 
 #define HTTP_OK                         200
 #define HTTP_CREATED                    201
+#define HTTP_NOT_MODIFIED               304
 #define HTTP_BAD_REQUEST                400
 #define HTTP_FORBIDDEN                  403
 #define HTTP_NOT_FOUND                  404
@@ -65,7 +66,7 @@ response_set_header(t_httpresp *, char *name, char *value);
 
 /* Setup the response content to serve a file */
 bool
-response_set_file(t_httpresp *, char *path);
+response_set_file(t_httpresp *, char *path, time_t modifiedsince);
 
 /* Setup the response content to serve some text */
 bool

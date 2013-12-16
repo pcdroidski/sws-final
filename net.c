@@ -130,6 +130,12 @@ handle_connection(int msgsock)
     t_httpresp *res;
     struct sigaction timeout;
     struct itimerval timer;
+    struct tm *headertm;
+
+    if ((headertm = (struct tm *)malloc(sizeof(struct tm))) == NULL) {
+        printf("Failed to malloc.\n");
+        exit(1);
+    }
 
     if ((pid = fork()) == 0) {
         /* Execute child code */
@@ -180,11 +186,18 @@ handle_connection(int msgsock)
 
             /* headers! read a line and do nothing with it */
             while ((nbytes = sock_readline(msgsock, msg, MSGBUFSZ)) >= 0) {
-                if (msg[0] == '\0')
+                if (strncmp(msg, "If-Modified-Since: ", 19) == 0) {
+                    strptime(&msg[19], "%A %B %d %Y, %H:%M:%S", headertm);
+                    if (headertm != NULL) {
+                        req->ifmodifiedsince = mktime(headertm);
+                    }
+                    free(headertm);
+                } else if (msg[0] == '\0') {
                     break;
+                }
             }
 
-            response_set_file(res, req->url);
+            response_set_file(res, req->url, req->ifmodifiedsince);
             finalize_response(res);
             write_response(res, msgsock);
 
