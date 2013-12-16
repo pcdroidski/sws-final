@@ -2,7 +2,7 @@ CC=gcc
 CFLAGS=-Wall -g
 LIBS=-lmagic
 
-SRC=net.c parser.c response_builder.c serve.c path.c daemonize.c dir_index.c loggig.c
+SRC=net.c parser.c response_builder.c serve.c path.c daemonize.c dir_index.c logging.c
 OBJ=net.o parser.o response_builder.o serve.o path.o daemonize.o dir_index.o logging.o
 EXE=sws
 

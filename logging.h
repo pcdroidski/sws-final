@@ -1,9 +1,15 @@
 #include <stdlib.h>
 #include <stdio.h>
+#include <stdbool.h>
+#include <unistd.h>
+#include <string.h>
+#include <sys/unistd.h>
+#include <fcntl.h>
+
 
 FILE *file;
 
-void logSetup(char *log_file);
+bool logSetup(char *log_file);
 
 void logMessage (char *message);
 
