@@ -69,7 +69,9 @@ parse(char *input)
     }
 
     /* Parse the HTTP version */
-    if ((token = strtok(NULL, " ")) != NULL) {
+    if ((token = strtok(NULL, " ")) == NULL) {
+        req->valid = 0;
+    } else {
         if (strncmp(token, "HTTP/", 5) != 0 ||  /* must start with HTTP/ */
             strlen(token) < 8 ||                /* must have a length of 8 */
             strchr(token+6, '.') == NULL) {     /* version must have a '.' */
