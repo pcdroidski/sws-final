@@ -191,9 +191,21 @@ handle_connection(int msgsock)
                 }
             }
 
-            response_set_file(res, req->url, req->ifmodifiedsince);
-            finalize_response(res);
-            write_response(res, msgsock);
+            /** Handle logic for CGI vs other request */
+            int c;
+            char cgi_test[9] = "";
+            for (c = 0; c < 9; c ++){
+                cgi_test[c] = req->url[c];
+            }
+
+            if (flags_c == 1 && strcmp(cgi_test, "/cgi-bin/") == 0){
+                response_set_cgi(res, req-> url, "/cgi-bin");
+
+            } else {
+              response_set_file(res, req->url, req->ifmodifiedsince);
+              finalize_response(res);
+             write_response(res, msgsock); 
+            }    
 
         } else {
             perror("getpeername");

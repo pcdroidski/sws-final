@@ -195,6 +195,82 @@ response_set_text(t_httpresp *resp, char *text)
 }
 
 bool
+response_set_cgi(t_httpresp *resp, char *path, char *cgi_path){
+    int templength = strlen(path) - CGI_LEN, i;
+    char tempDir[templength + 1];
+
+    for (i = 0; i< templength; i++){
+        tempDir[i] = path[CGI_LEN + i];
+    }
+    char requestDir[MAX_LEN];
+
+    strcpy(requestDir, cgi_path);
+    strcat(requestDir, "/");
+
+    for (i = 0; i < strlen(tempdir); i++){
+        querystring[i] = tempDir[i];                            
+    }
+
+    strcat(requestDir, tempDir);
+
+
+
+
+    return finalize_cgi(resp, requestDir);
+}
+
+
+bool
+finalize_cgi(t_httpresp *resp, char *path){
+    struct stat st;
+
+    if (resp == NULL){
+        return false;
+    }   
+
+    /** Check existence of the file requested */
+    if (access(path, F_OK) != 0){
+        resp->status = HTTP_NOT_FOUND;
+        return false;
+    }
+
+    if (stat(path, &st) == -1){
+        resp->status = HTTP_SERVER_ERROR;
+        return false; 
+    }
+
+    if (S_ISDIR(st.st_mode)){
+        /** If DIR then handle it like normal file */
+        return response_set_file(resp, path);
+    } else {
+        /** Check to make sure file has execution permissions */
+        if (access(path, X_OK) != 0){
+            resp->status = HTTP_FORBIDDEN;
+            return false;
+        } else {
+        //TODO If not a GET- add logic for POST
+            int pid;
+
+            if ((pid = fork()) < 0){
+                resp-> status = HTTP_SERVER_ERROR;
+                return false;
+            }
+            if (pid == 0){
+                char temp[MAX_LEN] = "";
+
+                dup2(resp->client_fd, STDOUT_FILENO);
+                if (execle(path, "", (char *) 0, env_init) < 0){
+                    resp->status = HTTP_SERVER_ERROR;
+                    return false;
+                }
+            }
+        }
+    }   
+
+    return true;
+}
+
+bool
 finalize_response(t_httpresp *resp)
 {
     time_t t;
