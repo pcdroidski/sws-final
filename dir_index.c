@@ -30,11 +30,13 @@ makeIndex( char *dir, char *index ){
                 if(memleft > memlist+ANCHOR_LEN){
                     char buffer[1024];
                     *buffer='\0';
-                    strcat(buffer,"<a href=\'");
-                    strncat(buffer,chp->fts_accpath,strlen(chp->fts_accpath));
-                    strncat(buffer,chp->fts_name,strlen(chp->fts_name));
+                    strcat(buffer,"<a href=\'/");
+                    strcat(buffer,chp->fts_accpath);
+                    if ((chp->fts_accpath)[strlen(chp->fts_accpath) - 1] != '/')
+                        strcat(buffer,"/");
+                    strcat(buffer,chp->fts_name);
                     strcat(buffer,"\'>");
-                    strncat(buffer,chp->fts_name,strlen(chp->fts_name));
+                    strcat(buffer,chp->fts_name);
                     strcat(buffer,"</a><br />");
                     memleft -= memlist+ANCHOR_LEN;
                    strncat(index,buffer,strlen(buffer));
