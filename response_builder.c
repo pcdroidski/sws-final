@@ -256,17 +256,16 @@ finalize_cgi(t_httpresp *resp, char *path, time_t modifiedsince){
                 char temp[MAX_LENGTH] = "";
                 char *envir[] = {"PATH=/tmp", temp, NULL};
                 
-                printf("org FD: %d \n", resp->content_fd);
-                printf("cgi script: %s \n", path);
+                if (debug)
+                    printf("org FD: %d \n", resp->content_fd);
+                    printf("cgi script: %s \n", path);
 
                 /* Push output of result to orginal socket descriptor */
                 dup2(resp->content_fd, STDOUT_FILENO);
                 if (execle(path, "", (char *) 0, envir) < 0){
                     resp->status = HTTP_SERVER_ERROR;
                     return false;
-                }
-                printf("Execution is ok \n");
-                
+                }                
             }
         }
     }   
