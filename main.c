@@ -13,6 +13,8 @@
 #include "daemonize.h"
 #include "net.h"
 
+#define PATH_MAX 4096
+
 /* Flags */
 int flags_c = 0;
 int flags_d = 0;
@@ -97,6 +99,7 @@ setup_options(int argc, char *argv[])
 int
 main(int argc, char **argv)
 {
+    char webroot[PATH_MAX];
 	debug = FALSE;
 	logging = FALSE;
 	//logfilename = NULL;
@@ -106,7 +109,8 @@ main(int argc, char **argv)
 
 	/* Create a daemon process if not in debug mode */
 	if (!debug){
-	   daemonize("sws-final");
+	    daemonize("sws-final", getcwd(webroot, sizeof(webroot)));
+        free(dir);
 	}
 
 	if (debug)

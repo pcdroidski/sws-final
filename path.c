@@ -36,5 +36,9 @@ char *path_normalize(char *path) {
         }
     }
 
+    /* Always return a relative path */
+    if (path[0] == '/')
+        return path + 1;
+
     return path;
 }

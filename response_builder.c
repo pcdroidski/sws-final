@@ -27,6 +27,8 @@
 #define SERVER_NAME     "sws"
 #define SERVER_VERSION  "0.1"
 
+#define FILE_404_PAGE   "404.html"
+
 char buf[BUFSZ];
 
 t_httpresp *
@@ -127,6 +129,8 @@ response_set_file(t_httpresp *resp, char *path)
         case ENOENT:
             /* File not found */
             resp->status = HTTP_NOT_FOUND;
+            if (strcmp(path, FILE_404_PAGE) != 0)
+                return response_set_file(resp, FILE_404_PAGE);
             break;
 
         default:
